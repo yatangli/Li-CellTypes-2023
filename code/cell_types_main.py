@@ -134,7 +134,7 @@ if load_gmm_data:
     bic =  np.loadtxt(folder_path+'data/bic.csv',delimiter=',')
     n_cluster_optimal = np.argmin(bic)+2
     labels_arr = np.loadtxt(folder_path+'data/labels_arr.csv',delimiter=',')
-    labels_arr_optimal = np.loadtxt(folder_path+'data/labels_arr_optimal.csv',delimiter=',')
+    # labels_arr_optimal = np.loadtxt(folder_path+'data/labels_arr_optimal.csv',delimiter=',')
 else:
     start = timeit.default_timer()
     n_cluster_max = 50
@@ -150,10 +150,10 @@ else:
     labels_arr = np.zeros((num_neuron,n_cluster_max-1),dtype=np.dtype('uint8'))
     for i in range(n_cluster_max-1):
         labels_arr[:,i] = labels_arr_all[:,i,bic_idx[i]]
-    labels_arr_optimal = labels_arr_all[:,n_cluster_optimal-2,:]
+    # labels_arr_optimal = labels_arr_all[:,n_cluster_optimal-2,:]
     np.savetxt(folder_path+'data/bic.csv', bic, delimiter=',')
     np.savetxt(folder_path+'data/labels_arr.csv', labels_arr, delimiter=',')
-    np.savetxt(folder_path+'data/labels_arr_optimal.csv', labels_arr_optimal, delimiter=',')
+    # np.savetxt(folder_path+'data/labels_arr_optimal.csv', labels_arr_optimal, delimiter=',')
 
 num_type = n_cluster_optimal    
 # plot Figure 2B 
@@ -226,37 +226,51 @@ else:
     np.savetxt(folder_path+'data/labels_gmm_sub.csv', labels_gmm_sub, delimiter=',')
     np.savetxt(folder_path+'data/idx_sub.csv', idx_sub, delimiter=',')
 #%% calcualte the co-association matrix
-labels_gmm_sub_all = np.ones((num_neuron,num_sub),dtype=int)*np.nan
-idx_sub = idx_sub.astype(int)
-for i in range(num_sub):
-    labels_gmm_sub_all[idx_sub[:,i],i] = labels_gmm_sub[:,i]
+plot_co_association_matrix = False
+if plot_co_association_matrix: 
+    labels_gmm_sub_all = np.ones((num_neuron,num_sub),dtype=int)*np.nan
+    idx_sub = idx_sub.astype(int)
+    for i in range(num_sub):
+        labels_gmm_sub_all[idx_sub[:,i],i] = labels_gmm_sub[:,i]
+        
+    load_co_mat = True
+    if load_co_mat:
+        co_mat_mean_sub = np.loadtxt(folder_path+'data/co_mat_mean_sub.csv',delimiter=',')
+    else:
+        start = timeit.default_timer()
+        co_mat_mean_sub = cal_co_mat_gmm(X,labels_gmm_sub_all)
+        stop = timeit.default_timer()
+        np.savetxt(folder_path+'data/co_mat_mean_sub.csv', co_mat_mean_sub, delimiter=',')
+        print(stop-start)
+    # sort it with clusters
+    co_mat_mean_sub_sorted_cluster,neuron_sorted_idx = sort_co_mat_cluster(X,labels_gmm_dendro,co_mat_mean_sub)
     
-load_co_mat = True
-if load_co_mat:
-    co_mat_mean_sub = np.loadtxt(folder_path+'data/co_mat_mean_sub.csv',delimiter=',')
+    # Figure 7C, related to Figure 2
+    fig, axs = plt.subplots(1,1,figsize=[12,12])
+    im = axs.pcolormesh(co_mat_mean_sub_sorted_cluster[::-1,::-1],cmap='viridis')
+    # fig.colorbar(im,ax=axs)
+    axs.set_aspect('equal', 'box')
+    axs.set_xticks([])
+    axs.set_yticks([])
+    if save_fig:
+        plt.savefig(folder_figure+'figure_7C.png',bbox_inches='tight')
+    plt.show()
+    # Figure 7D, related to Figure 2
+    co_cluster_sub = cal_co_cluster(co_mat_mean_sub_sorted_cluster,cluster_size_gmm)
+    if save_fig:
+        plt.savefig(folder_figure+'figure_7D.png',bbox_inches='tight')
+    plt.show()
+    np.savetxt(folder_data+'co_cluster_sub.csv', co_cluster_sub, delimiter=',')
 else:
-    start = timeit.default_timer()
-    co_mat_mean_sub = cal_co_mat_gmm(X,labels_gmm_sub_all)
-    stop = timeit.default_timer()
-    np.savetxt(folder_path+'data/co_mat_mean_sub.csv', co_mat_mean_sub, delimiter=',')
-    print(stop-start)
-# sort it with clusters
-co_mat_mean_sub_sorted_cluster,neuron_sorted_idx = sort_co_mat_cluster(X,labels_gmm_dendro,co_mat_mean_sub)
-
-# Figure 7C, related to Figure 2
-fig, axs = plt.subplots(1,1,figsize=[12,12])
-im = axs.pcolormesh(co_mat_mean_sub_sorted_cluster[::-1,::-1],cmap='viridis')
-# fig.colorbar(im,ax=axs)
-axs.set_aspect('equal', 'box')
-axs.set_xticks([])
-axs.set_yticks([])
-plt.show()
-plt.savefig(folder_figure+'figure_7C.png',bbox_inches='tight')
-
-# Figure 7D, related to Figure 2
-co_cluster_sub = cal_co_cluster(co_mat_mean_sub_sorted_cluster,cluster_size_gmm)
-plt.savefig(folder_figure+'figure_7D.png',bbox_inches='tight')
-
+    co_cluster_sub = np.loadtxt(folder_data+'co_cluster_sub.csv',delimiter=',')
+    _, axs = plt.subplots(1,1)
+    axs.pcolormesh(co_cluster_sub[::-1,::-1],cmap='viridis')
+    axs.set_aspect('equal', 'box')
+    axs.set_xticks([])
+    axs.set_yticks([])
+    if save_fig:
+        plt.savefig(folder_figure+'figure_7D.png',bbox_inches='tight')
+    plt.show()    
 # %%calculate the correlation between clusters in original dataset
 X_cluster_gmm_dendro_reverse = X_cluster_gmm_dendro[::-1,:]
 corr_original, corr_original_full, corr_sub_match = cal_corr_sub(X_cluster_gmm_dendro,X_cluster_gmm_sub,num_sub=num_sub)
