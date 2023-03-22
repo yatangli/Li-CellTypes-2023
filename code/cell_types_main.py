@@ -469,7 +469,7 @@ plt.show()
 
 # Figure 10B, related to Figure 3
 _, ax = plt.subplots(1,1,figsize=(8,8))
-ax.imshow(corr_fp,cmap='bwr',aspect='equal',origin='lower')
+ax.imshow(corr_fp,cmap='bwr',aspect='equal',origin='lower',vmin=-1,vmax=1)
 ax.set_xticks([])
 ax.set_yticks([])
 if save_fig:
