@@ -39,7 +39,6 @@ from matplotlib.font_manager import findfont, FontProperties
 from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.manifold import TSNE
 import timeit
-# import dill
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
@@ -71,10 +70,9 @@ folder_figure = folder_path+'figures/'
 save_fig = True
 
 #%% load data
-
 neuron,chirp,dl_lr,mb,color,st,rf = load_data_new(folder_data, data_path)
-
 num_neuron = neuron['soma_size'].size
+
 #%% extract features from chirp data using sparse PCA;  
 # note mean(pc)=0 but std(pc)!=1
 pc_spca_chirp, pv_spca_chirp = sparse_pca_analysis(chirp['chirp_temporal_norm'], k_spca=20)
@@ -124,7 +122,7 @@ X_temporal = np.concatenate((mb['mb_temporal_sorted_truncated_norm'],
                              dl_lr['dl_lr_temporal_sorted_truncated_norm'], 
                              chirp['chirp_temporal_norm'], st['st_temporal_norm'], 
                              color['color_temporal_norm'], feature_other_norm), axis=1)
-# changed to X_sorted from X on 20210427
+
 X = StandardScaler().fit_transform(X_sorted)
 _,num_feature = X.shape
 
@@ -170,9 +168,7 @@ cluster_dist_gmm = plot_cluster_dist(X_cluster_gmm)
 # show cluster in temporal space
 X_temporal_cluster_gmm,X_temporal_cluster_gmm_error,_,_ = plot_cluster(X_temporal,labels_gmm,[])
 
-#
 #%% plot dendrogram as 2d image and resort the temproal matrix
-
 fig_params_dendro = {'ax_dendro':[0,0,0.1,1],
                      'ax_matrix':[0.132,0,0.8,1],
                      'ax_colorbar':[0.94,0,0.02,1],
@@ -181,8 +177,6 @@ fig_params_dendro = {'ax_dendro':[0,0,0.1,1],
 idx_sorted, labels_gmm_dendro, cluster_size_gmm = dendrogram_x(X_cluster_gmm, X_temporal_cluster_gmm, labels_gmm, 
                                                                fig_params_dendro, [], fig_zoom=2.5,plot_bool=False) 
 
-
-# file_save_dendro_clustered = folder_figure + 'dendro_clustered'
 X_cluster_gmm_dendro, X_cluster_gmm_dendro_error, _, X_cluster_gmm_dendro_num = plot_cluster(
     X,labels_gmm_dendro,[],sampling_rate=1)
 
@@ -193,10 +187,10 @@ ax.imshow(X_cluster_gmm_dendro,cmap='bwr',norm=norm)
 if save_fig:
     plt.savefig(folder_figure+'figure_7B.png',bbox_inches='tight')
 plt.show()      
-  
-  
+
 pv_k_X_cluster_gmm_dendro, lamda_cumsum_X_cluster_gmm_dendro, pc_k_X_cluster_gmm_dendro = pca_x(X_cluster_gmm_dendro)
 pc_k_X_cluster_gmm_dendro_reverse = pc_k_X_cluster_gmm_dendro[::-1,:]
+
 # Figure 2C  
 fig,ax = plt.subplots(1,1,figsize=(10,8))   
 ax.plot(-pc_k_X_cluster_gmm_dendro_reverse[:10,0],pc_k_X_cluster_gmm_dendro_reverse[:10,1],'*',color='blue')
@@ -207,6 +201,7 @@ ax.set_aspect('auto')
 if save_fig:
     plt.savefig(folder_figure+'figure_2C.png',bbox_inches='tight')
 plt.show()   
+
 #%% subsampling to test the cluster stability
 num_sub = 100
 n_init = 1000
@@ -226,22 +221,23 @@ else:
     np.savetxt(folder_path+'data/labels_gmm_sub.csv', labels_gmm_sub, delimiter=',')
     np.savetxt(folder_path+'data/idx_sub.csv', idx_sub, delimiter=',')
 #%% calcualte the co-association matrix
-plot_co_association_matrix = False
+plot_co_association_matrix = True
 if plot_co_association_matrix: 
     labels_gmm_sub_all = np.ones((num_neuron,num_sub),dtype=int)*np.nan
     idx_sub = idx_sub.astype(int)
     for i in range(num_sub):
         labels_gmm_sub_all[idx_sub[:,i],i] = labels_gmm_sub[:,i]
         
-    load_co_mat = True
+    load_co_mat = False
     if load_co_mat:
         co_mat_mean_sub = np.loadtxt(folder_path+'data/co_mat_mean_sub.csv',delimiter=',')
     else:
+        # it takes ~4 min
         start = timeit.default_timer()
         co_mat_mean_sub = cal_co_mat_gmm(X,labels_gmm_sub_all)
         stop = timeit.default_timer()
-        np.savetxt(folder_path+'data/co_mat_mean_sub.csv', co_mat_mean_sub, delimiter=',')
         print(stop-start)
+        # np.savetxt(folder_path+'data/co_mat_mean_sub.csv', co_mat_mean_sub, delimiter=',')
     # sort it with clusters
     co_mat_mean_sub_sorted_cluster,neuron_sorted_idx = sort_co_mat_cluster(X,labels_gmm_dendro,co_mat_mean_sub)
     
@@ -255,15 +251,21 @@ if plot_co_association_matrix:
     if save_fig:
         plt.savefig(folder_figure+'figure_7C.png',bbox_inches='tight')
     plt.show()
+    
     # Figure 7D, related to Figure 2
-    co_cluster_sub = cal_co_cluster(co_mat_mean_sub_sorted_cluster,cluster_size_gmm)
+    co_cluster_sub = cal_co_cluster(co_mat_mean_sub_sorted_cluster,cluster_size_gmm,plot_bool=False)
+    _, axs = plt.subplots(1,1,figsize=(8,8))
+    axs.pcolormesh(co_cluster_sub[::-1,::-1],cmap='viridis')
+    axs.set_aspect('equal', 'box')
+    axs.set_xticks([])
+    axs.set_yticks([])
     if save_fig:
         plt.savefig(folder_figure+'figure_7D.png',bbox_inches='tight')
     plt.show()
-    np.savetxt(folder_data+'co_cluster_sub.csv', co_cluster_sub, delimiter=',')
+    # np.savetxt(folder_data+'co_cluster_sub.csv', co_cluster_sub, delimiter=',')
 else:
     co_cluster_sub = np.loadtxt(folder_data+'co_cluster_sub.csv',delimiter=',')
-    _, axs = plt.subplots(1,1)
+    _, axs = plt.subplots(1,1,figsize=(8,8))
     axs.pcolormesh(co_cluster_sub[::-1,::-1],cmap='viridis')
     axs.set_aspect('equal', 'box')
     axs.set_xticks([])
@@ -271,6 +273,7 @@ else:
     if save_fig:
         plt.savefig(folder_figure+'figure_7D.png',bbox_inches='tight')
     plt.show()    
+    
 # %%calculate the correlation between clusters in original dataset
 X_cluster_gmm_dendro_reverse = X_cluster_gmm_dendro[::-1,:]
 corr_original, corr_original_full, corr_sub_match = cal_corr_sub(X_cluster_gmm_dendro,X_cluster_gmm_sub,num_sub=num_sub)
@@ -533,7 +536,6 @@ genetic_label_text = [label.replace('5.0', genetic_name[5]) for label in genetic
 df_results['genetic_label'] = genetic_label_text
 df_results['genetic_label_num'] = genetic_label
 
-
 #%% set parameters for plotting Figures
 _,chirp_len = chirp['chirp_temporal_norm'].shape
 _,mb_len = mb['mb_temporal_sorted_truncated_norm'].shape
@@ -580,7 +582,6 @@ fig_params = {'space_sub': 1, # arbituray unit
               }
 
 columns_name_dendro = list.copy(columns_name)
-
 
 #%% Figure 2A: temporal plot with error
 file_save_cluster_dendro_temporal= folder_figure + 'figure_2A'
@@ -667,9 +668,6 @@ plt.show()
 #%% Figure 1D
 example_image_id = 18 # 18 is Vglut2_Cre AF2 20180125_1
 example_image_idx = neuron['image_id']==example_image_id
-# dl_len = int(dl_lr['dl_lr_temporal'].shape[1]/2)
-# dl_temporal = dl_lr['dl_lr_temporal'][:,:dl_len]
-# lr_temporal = dl_lr['dl_lr_temporal'][:,dl_len:]
 all_temporal = np.concatenate((mb['mb_temporal'], dl_lr['dl_lr_temporal'], chirp['chirp_temporal'], 
                                 st['st_temporal'], color['color_temporal']), axis=1)
 
@@ -677,8 +675,6 @@ example_image_temporal = all_temporal[example_image_idx,:]
 example_image_temporal_mean = np.mean(example_image_temporal, axis=1)
 example_image_temporal_max = np.max(example_image_temporal, axis=1)
 
-# dl_temporal_se = dl_lr['dl_lr_temporal_se'][:,:dl_len]
-# lr_temporal_se = dl_lr['dl_lr_temporal_se'][:,dl_len:]
 all_temporal_se = np.concatenate((mb['mb_temporal_se'], dl_lr['dl_lr_temporal_se'], chirp['chirp_temporal_se'], 
                                   st['st_temporal_se'], color['color_temporal_se']), axis=1)
 example_image_temporal_se = all_temporal_se[example_image_idx,:]
@@ -794,7 +790,6 @@ for i in range(num_image):
     
     image_area_ratio_ftypes[i,:] = image_area_ftypes[i,:]/image_area[i]
 
-
 p_all_types_2d = np.loadtxt(folder_data+'p_all_types.csv',delimiter=',')
 p_all_types = p_all_types_2d.reshape(num_image,num_type,num_type)
     
@@ -845,28 +840,11 @@ if save_fig:
 plt.show()
 
 # Figure 11B, related to Figure 4
-plt.bar(range(1,num_type+1),num_separated,width=1,color='gray',edgecolor='black')
+fig,ax = plt.subplots(1,1,figsize(10,8))
+ax.bar(range(1,num_type+1),num_separated,width=1,color='gray',edgecolor='black')
 if save_fig:
     plt.savefig(folder_figure+'figure_11B.png',bbox_inches='tight')
 plt.show()
-#%%
-        
-# density_per_image = neurons_per_image/image_area*1e6
-# # sort according genetic types
-# genetic_name_1 = ['Wild_type','Vglut2_Cre', 'Vgat_Cre', 'Tac1_Cre', 'Rorb_Cre', 'Ntsr1_Cre']
-# genetic_num = len(genetic_name_1)
-# image_genetic_name = []
-# for im in image_info[0]:
-#     image_genetic_name.append(im.lower())
-# density_per_image_gen = []
-# for i in range(genetic_num):
-#     density_per_image_gen.append(density_per_image[np.asarray(image_genetic_name)==genetic_name_1[i].lower()])
-# density_per_image_mean_sd = np.zeros((genetic_num,2))
-# for i in range(genetic_num):
-#     density_per_image_mean_sd[i,0] = np.mean(density_per_image_gen[i])
-#     density_per_image_mean_sd[i,1] = np.std(density_per_image_gen[i])
-
-
 #%% analyze the cell types within 50um from a neuron
 # only select types which has >=5 neurons in a image
 neurons_per_image = np.zeros(num_image)
@@ -874,7 +852,6 @@ for i in range(num_image):
     neurons_per_image[i] = np.sum(neuron['image_id']==i)
 image = {'image_area':image_area,
          'neurons_per_image':neurons_per_image}
-
 
 #%% analyze the cell types within 50um-300um from a neuron
 dist_thr_arr = np.asarray(range(50,301,50))
@@ -933,7 +910,6 @@ for i in range(num_type):
     
 cluster_label_5_example_all_density = neurons_per_cluster_density.argsort()[-5:][::-1]
 cluster_label_5_example_all_density_plot = num_type - cluster_label_5_example_all_density
-
 
 cluster_label_5_example_all_density =  num_type - cluster_label_5_example_all_density_plot
 density_all_types_anatomy_example_all_mean_sem = np.zeros((bin_num_anatomy,cluster_label_5_example_all_density.size*2))
@@ -1040,7 +1016,6 @@ rf_dia_anat_median_cluster = rf_dia_median_cluster/rf_visual_to_anatomy*1e3 #in 
 rf_radius_anat_arr = np.stack((rf_dia_anat_median_cluster/2, rf_dia_anat_median_cluster/1),axis=1) #0.5RF to 1RF
 density_other_types_anatomy_mean,_ = density_dist(rf_radius_anat_arr,df_results,image,n_all_types)
 
-
 density_all_types_anatomy_mean_0_5_rf = np.zeros(num_type)
 density_all_types_anatomy_mean_1_0_rf = np.zeros(num_type)
 density_all_types_anatomy_mean_rf_ratio = np.zeros(num_type)
@@ -1132,7 +1107,6 @@ figure_cluster_genetic_temporal_box(df_results, 'depth_label',  X_cluster_depth,
                                  temporal_list_depth, [], temporal_zooms,
                                  columns_name_dendro.copy(), bins_list,
                                  file_save_temporal_depth, fig_params, fac=True, sampling_rate=5)
-
 
 #%%
 depth_label_image = []    

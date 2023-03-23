@@ -3184,130 +3184,25 @@ def sort_to_cluster(X_data,labels_gmm):
     
     return X_sorted
 
-#%% create co-associate matrix using n_cluster: 10, 15, 20, 25, 30, 35
-def cal_co_mat(X,n_cluster_arr,random_states_arr):
-    num_neuron = X.shape[0]
-    cluster_paras = np.reshape(np.asarray(np.meshgrid(n_cluster_arr,random_states_arr)),(2,-1))
-    n_co_mat = n_cluster_arr.size*(random_states_arr.size*2+1)
-    co_mat = np.zeros((n_co_mat,num_neuron,num_neuron))
-    for i in range(n_co_mat):
-        print(i)
-    # for i in range(1):
-        #for gmm
-        if i<cluster_paras.shape[1]: 
-            n_cluster = cluster_paras[0,i]
-            gmm = GaussianMixture(n_components=n_cluster,covariance_type='diag',random_state = cluster_paras[1,i])
-            gmm.fit(X)
-            labels = gmm.predict(X)
-        #for spectral
-        elif i>=cluster_paras.shape[1] and i<cluster_paras.shape[1]*2: 
-            n_cluster = cluster_paras[0,i-cluster_paras.shape[1]]
-            spectral = cluster.SpectralClustering(n_clusters=n_cluster, random_state = cluster_paras[1,i-cluster_paras.shape[1]],
-                                              eigen_solver='arpack', affinity="nearest_neighbors")
-            spectral = spectral.fit(X)
-            labels = spectral.labels_
-        else:
-            n_cluster = n_cluster_arr[i-cluster_paras.shape[1]*2]
-            ahc = AgglomerativeClustering(distance_threshold=None, n_clusters=n_cluster,affinity='euclidean',linkage='ward')
-            ahc = ahc.fit(X)
-            labels = ahc.labels_
-        start = timeit.default_timer()
-        co_mat[i,:,:] = np.ones((num_neuron,num_neuron))
-        for j in range(num_neuron):
-            # print(j)
-            for k in range(j+1,num_neuron):
-                if labels[j]!=labels[k]:
-                    co_mat[i,j,k] = 0
-                    co_mat[i,k,j] = 0
-        stop = timeit.default_timer()
-        print(stop-start)
-        
-    co_mat_mean = np.mean(co_mat,axis=0)
-    plt.imshow(co_mat_mean,cmap='viridis')  
-    plt.colorbar()
-    plt.show()
-    return co_mat_mean,co_mat
-def cal_co_mat_gmm_spectral(X,n_cluster,random_states_arr):
-    num_neuron = X.shape[0]
-    # cluster_paras = np.reshape(np.asarray(np.meshgrid(n_cluster_arr,random_states_arr)),(2,-1))
-    n_co_mat = random_states_arr.size*2
-    co_mat_sum = np.zeros((num_neuron,num_neuron))
-    for i in range(n_co_mat):
-        if np.mod(i,10)==0:
-            print(i)
-    # for i in range(1):
-        #for gmm
-        if i<random_states_arr.size: 
-            gmm = GaussianMixture(n_components=n_cluster,covariance_type='diag',random_state = random_states_arr[i],max_iter=1000)
-            gmm.fit(X)
-            labels = gmm.predict(X)
-        #for spectral
-        else: 
-            spectral = cluster.SpectralClustering(n_clusters=n_cluster, random_state = random_states_arr[i-random_states_arr.size],
-                                              eigen_solver='arpack', affinity="nearest_neighbors")
-            spectral = spectral.fit(X)
-            labels = spectral.labels_
-        # start = timeit.default_timer()
-        co_mat = np.ones((num_neuron,num_neuron))
-        for j in range(num_neuron):
-            # print(j)
-            for k in range(j+1,num_neuron):
-                if labels[j]!=labels[k]:
-                    co_mat[j,k] = 0
-                    co_mat[k,j] = 0
-        co_mat_sum = co_mat_sum+co_mat
-        # stop = timeit.default_timer()
-        # print(stop-start)
-        
-    co_mat_mean = co_mat_sum/n_co_mat
-    # plt.imshow(co_mat_mean,cmap='viridis')  
-    # plt.colorbar()
-    # plt.show()
-    return co_mat_mean
-def cal_co_mat_gmm_1(X,n_cluster,n_init=100):
-    num_neuron = X.shape[0]
-    co_mat_sum = np.zeros((num_neuron,num_neuron))
-    labels = np.zeros((num_neuron,n_init),dtype=np.dtype('uint8'))
-    n_co_mat = n_init
-    for i in range(n_init):
-        gmm = GaussianMixture(n_components=n_cluster,covariance_type='diag',random_state=i,max_iter=1000)
-        gmm.fit(X)
-        labels[:,i] = gmm.predict(X)
-        # start = timeit.default_timer()
-        co_mat = np.ones((num_neuron,num_neuron))
-        for j in range(num_neuron):
-            # print(j)
-            for k in range(j+1,num_neuron):
-                if labels[j,i]!=labels[k,i]:
-                    co_mat[j,k] = 0
-                    co_mat[k,j] = 0
-        co_mat_sum = co_mat_sum+co_mat
-        # stop = timeit.default_timer()       
-    co_mat_mean = co_mat_sum/n_co_mat
-    plt.imshow(co_mat_mean,cmap='viridis')  
-    plt.colorbar()
-    plt.show()
-    return co_mat_mean
-def cal_co_mat_gmm(X,labels):
+#%% create co-associate matrix 
+def cal_co_mat_gmm(X,labels,plot_bool=False):
     num_neuron = X.shape[0]
     n_co_mat = labels.shape[1]
     co_mat_sum = np.zeros((num_neuron,num_neuron))
     for i in range(n_co_mat):
-        # start = timeit.default_timer()
+        print(i)
         co_mat = np.ones((num_neuron,num_neuron))
         for j in range(num_neuron):
-            # print(j)
             for k in range(j+1,num_neuron):
                 if labels[j,i]!=labels[k,i]:
                     co_mat[j,k] = 0
                     co_mat[k,j] = 0
-        co_mat_sum = co_mat_sum+co_mat
-        # stop = timeit.default_timer()
-        # print(stop-start)        
+        co_mat_sum = co_mat_sum+co_mat  
     co_mat_mean = co_mat_sum/n_co_mat
-    plt.imshow(co_mat_mean,cmap='viridis')  
-    plt.colorbar()
-    plt.show()
+    if plot_bool:
+        plt.imshow(co_mat_mean,cmap='viridis')  
+        plt.colorbar()
+        plt.show()
     return co_mat_mean
 def sort_co_mat(X, co_mat_mean):  
     num_neuron = X.shape[0]
@@ -3337,33 +3232,7 @@ def sort_co_mat(X, co_mat_mean):
 # %% define a function to sort co_mat with clusters
 def sort_co_mat_cluster(X_data,labels_gmm,co_mat,plot_bool=False):
     n_cluster = np.unique(labels_gmm).shape[0]
-    # n_feature = X_data.shape[1]
     n_neuron = labels_gmm.size
-    # sort cluster, this is abandoned 20210211
-    # cluster_center = np.zeros((n_cluster,n_feature))
-    # for i in range(n_cluster):
-    #     cluster_center[i,:] = np.mean(X_data[labels_gmm==i,:],axis=0)
-
-    # cluster_center_min = np.min(cluster_center,axis=0)
-    # cluster_center_max = np.max(cluster_center,axis=0)
-    # cluster_center_range = cluster_center_max - cluster_center_min
-    # cluster_center_dim_max_range = np.argmax(cluster_center_range)
-    # # plt.plot(cluster_center[:,0],cluster_center[:,1],'-^',color='black')
-    # # plt.show()
-    # cluster_center_sorted = np.zeros_like(cluster_center)
-    # cluster_center_sorted_idx = np.zeros(n_cluster,dtype=int)
-    # cluster_center_sorted_idx[0] = np.argmin(cluster_center[:,cluster_center_dim_max_range])
-    # cluster_center_sorted[0,:] = cluster_center[cluster_center_sorted_idx[0],:]
-    # idx_left = np.ones(n_cluster,dtype=int)
-    # idx_left[cluster_center_sorted_idx[0]]=0
-    # for i in range(1,n_cluster):
-    #     _temp = np.linalg.norm(cluster_center-cluster_center_sorted[i-1,:],axis=1)
-    #     _idx_temp = np.argsort(_temp)
-    #     cluster_center_sorted_idx[i] = _idx_temp[idx_left[_idx_temp]>0][0]
-    #     cluster_center_sorted[i,:] = cluster_center[cluster_center_sorted_idx[i],:]
-    #     idx_left[cluster_center_sorted_idx[i]] = 0
-    # plt.plot(cluster_center_sorted[:,0],cluster_center_sorted[:,1],'-^',color='black')
-    # plt.show()
     co_mat_sorted_cluster = np.zeros_like(co_mat)
     neuron_sorted_idx = np.zeros(n_neuron,dtype=int)
     j = 0
@@ -3381,29 +3250,7 @@ def sort_co_mat_cluster(X_data,labels_gmm,co_mat,plot_bool=False):
         axs.set_aspect('equal', 'box')
         plt.show()
     return co_mat_sorted_cluster,neuron_sorted_idx
-    
-    # co_mat_mean_sorted = np.zeros_like(co_mat_mean)
-    # co_mat_mean_sorted_idx = np.zeros(num_neuron,dtype=int)
-    # X_min = np.min(X,axis=0)
-    # X_max = np.max(X,axis=0)
-    # X_range = X_max - X_min
-    # dim_max_range = np.argmax(X_range)
-    # # set start point as the most left point along longest dimension
-    # co_mat_mean_sorted_idx[0] = np.argmin(X_data[:,dim_max_range])
-    # for i in range(num_neuron-1):
-    #     for j in range(num_neuron):
-    #         k = np.argsort(co_mat_mean[co_mat_mean_sorted_idx[i],:])[::-1][j]
-    #         if np.sum(k==co_mat_mean_sorted_idx[:i+1])==0:
-    #             co_mat_mean_sorted_idx[i+1] = k
-    #             break 
-    # plt.plot(X[co_mat_mean_sorted_idx,0],X[co_mat_mean_sorted_idx,1],'^-')
-    # for i in range(num_neuron):
-    #     co_mat_mean_sorted[i,i:] = co_mat_mean[co_mat_mean_sorted_idx[i],co_mat_mean_sorted_idx[i:]] 
-    #     co_mat_mean_sorted[i:,i] = co_mat_mean_sorted[i,i:]
-    # fig, axs = plt.subplots(1,1)
-    # axs.pcolormesh(co_mat_mean_sorted)
-    # axs.set_aspect('equal', 'box')
-    # plt.show()
+
 #%% calculate within-cluster rate and between-cluster rate, merge clusters if there are close
 def cal_co_cluster(co_mat_mean_s_sorted_cluster,cluster_size,plot_bool=True):
     n_cluster_optimal = cluster_size.shape[0]
@@ -3428,8 +3275,7 @@ def cal_co_cluster(co_mat_mean_s_sorted_cluster,cluster_size,plot_bool=True):
         axs.pcolormesh(co_cluster[::-1,::-1],cmap='viridis')
         axs.set_aspect('equal', 'box')
         axs.set_xticks([])
-        axs.set_yticks([])
-        plt.show()   
+        axs.set_yticks([]) 
     return co_cluster
 # %% subsampling to test the cluster stability
 def cal_sub_sampling(X,n_cluster_optimal,sub_perc=0.9,num_sub=20,n_init=100,random_init=True):
