@@ -840,7 +840,7 @@ if save_fig:
 plt.show()
 
 # Figure 11B, related to Figure 4
-fig,ax = plt.subplots(1,1,figsize(10,8))
+fig,ax = plt.subplots(1,1,figsize=(10,8))
 ax.bar(range(1,num_type+1),num_separated,width=1,color='gray',edgecolor='black')
 if save_fig:
     plt.savefig(folder_figure+'figure_11B.png',bbox_inches='tight')

@@ -91,16 +91,6 @@ def pca_x(X,centralize=True):
         X_0 = X
     [U,S,V] = np.linalg.svd(X_0)
     V = V.T
-    #u @ np.diag(s) @ vh = (u * s) @ vh 
-    # X = U*S*V'. C=X_centered'*X_centered/(n-1)=V*S*U'U*S*V'/(n-1)=V*S^2/(n-1)*V'
-    # Columns of V are principal directions/axes.
-    # Columns of US or XV are principal components ("scores").   
-     
-    #  the following is covraince matrix approach; these two give the same result
-    #  X_cov = X_0.T@X_0 #covariance matrix
-    # eigenvalues = np.linalg.eigvals(X_cov)
-    # eigenvalues = eigenvalues/np.sum(eigenvalues)  
-               
     lamda = np.square(S)/(n-1)
     lamda = lamda/np.sum(lamda)
     PV = V
@@ -127,12 +117,6 @@ def plot_cluster(X,labels,file_save=[], fig_zoom=1, sampling_rate=5,plot_bool=Fa
     for i in range(n_cluster):
         labels_count[i] = sum(np.isin(labels,labels_unique[i]))
         
-    # # sort the cluster so that the 1st cluster has the most neurons
-    # # this is not necessary, keep orignial order @ 20200614
-    # labels_unique_sorted = np.argsort(labels_count)[::-1]
-    # for i in range(n_cluster):
-    #     labels_sorted[labels==labels_unique_sorted[i]] = i
-
     labels_sorted = labels  
     
     k = 0
@@ -158,7 +142,6 @@ def plot_cluster(X,labels,file_save=[], fig_zoom=1, sampling_rate=5,plot_bool=Fa
             plt.plot([0,n_samples-0.9],[k-0.5,k-0.5],'r-')
         axes.set_xticks(xticks)
         axes.set_xticklabels(xticklabels)
-        #plt.scatter(X[:, 0], X[:, 1], c=labels, s=40, cmap='viridis');
         plt.colorbar(aspect=60)
         if len(file_save)>0:
             plt.savefig(file_save+'.png',bbox_inches='tight')
@@ -171,12 +154,8 @@ def plot_cluster(X,labels,file_save=[], fig_zoom=1, sampling_rate=5,plot_bool=Fa
         plt.imshow(X_cluster, aspect='auto', origin='lower',cmap='viridis')#'viridis' plasma' 'cividis'
         axes.set_xticks(xticks)
         axes.set_xticklabels(xticklabels)
-        # axes.tick_params(labelsize=25)
-        # plt.colorbar().ax.tick_params(labelsize=25)
         plt.colorbar()
         plt.show()
-        
-    
     
     return X_cluster, X_cluster_error, X_sorted, labels_count
 #%% define a plot function
@@ -195,7 +174,6 @@ def imshow_clusters(X_cluster,sampling_rate=5):
     axes.set_xticks(xticks)
     axes.set_xticklabels(xticklabels)
     axes.tick_params(labelsize=25)
-    # plt.rcParams.update({'font.size': 25})
     plt.colorbar().ax.tick_params(labelsize=25)
     plt.show()
        
@@ -204,10 +182,7 @@ def imshow_X(X,title=None,sampling_rate=5,cmap='viridis',aspect='auto'):
     if len(X.shape)==1:
         X = np.expand_dims(X, axis=1)
     [n_cells, n_samples] = np.shape(X)
-    # if sampling_rate == 1:
-    #     plt.figure(figsize=(fig_width*2,np.min([n_cells/16,fig_height*2])))
-    # else:
-    #     plt.figure(figsize=(fig_width,np.min([n_cells/16,fig_height])))
+
     plt.figure(figsize=(fig_width,np.min([n_cells/16,fig_height])))
     axes= plt.axes()
     plt.imshow(X,aspect=aspect,cmap=cmap)#'viridis' plasma' 'cividis'
@@ -234,15 +209,11 @@ def imshow_PV(X,title=None,sampling_rate=5,cmap='viridis',ytick_step=2,vmin=0,vm
     if len(X.shape)==1:
         X = np.expand_dims(X, axis=1)
     [n_pv, n_sample] = np.shape(X)
-    # if sampling_rate == 1:
-    #     plt.figure(figsize=(fig_width*2,np.min([n_cells/16,fig_height*2])))
-    # else:
-    #     plt.figure(figsize=(fig_width,np.min([n_cells/16,fig_height])))
     fig_unit_size = 0.2
     plt.figure(figsize=(fig_unit_size*n_sample,fig_unit_size*n_pv))
     axes= plt.axes()
     plt.imshow(X,aspect='equal',cmap=cmap,vmin=vmin, vmax=vmax,origin=origin)#'viridis' plasma' 'cividis'
-    # print(sampling_rate)
+
     axes.set_xticks([])     
     yticks = np.asarray(range(0,n_pv,ytick_step))
     ytick_num = len(yticks)        
@@ -254,7 +225,7 @@ def imshow_PV(X,title=None,sampling_rate=5,cmap='viridis',ytick_step=2,vmin=0,vm
     plt.title(title)
     v = np.linspace(vmin, vmax, 3, endpoint=True)
     plt.colorbar(ticks=v)
-    # plt.show()    
+   
 #%% normalize responses at each row to [0,1]
 def norm_x(x,formula = 0):
     y = np.copy(x)
@@ -270,7 +241,6 @@ def norm_x(x,formula = 0):
             temp = x-min(x)
             y = temp/max(temp)
     return y
-#%% standarize each columns / features
 #%%determine the optimal cluster by fitting Gaussian mixture model to data
 def optimal_cluster_gmm(X,n_components_max,random_init=False,n_init=100):
     # n_components_max = 50
@@ -311,11 +281,6 @@ def optimal_cluster_gmm(X,n_components_max,random_init=False,n_init=100):
                 aic[i,j] = gmm.aic(X)
                 silhouette_score[i,j] = sklearn.metrics.silhouette_score(X,labels) 
                 
-
-        # # calculate bic, it's the same as gmm.bic(x), verified.
-        # l = gmm.score(pc_k)*n
-        # m = (k*2+1)*n_cluster_optimal - 1
-        # bic_cal = -2*l + m*np.log(n)
     if random_init:
         bic_plot = bic
         aic_plot = aic
@@ -330,51 +295,29 @@ def optimal_cluster_gmm(X,n_components_max,random_init=False,n_init=100):
     bic_idx = np.argmin(bic,axis=1)
     labels_arr_optimal = labels_arr[:,n_cluster-2,bic_idx[n_cluster-2]]
 
-    
-        
-    
-    
-    # bic_delta = bic[1:] - bic[:-1]
     fig, axs = plt.subplots(3, 1, sharex=True, figsize=(fig_width,fig_height*0.68))
     axs[0].plot(range_n_clusters,bic_plot,marker='+')
     axs[0].yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
-    # xticks_cluster = range(1,n_components_max+1,5)
-    # axs[0].set_xticks(xticks_cluster)
     axs[0].legend(['BIC scores'])
     
     
     axs[1].plot(range_n_clusters,aic_plot,marker='+')
     axs[1].yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
-    # xticks_cluster = range(1,n_components_max+1,5)
-    # axs[0].set_xticks(xticks_cluster)
     axs[1].legend(['AIC scores'])
-    
-    
-    # axs[1].plot(range_n_clusters[1:],bic_delta,marker='+')  
-    # axs[1].yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
-    # # axs[1].set_xticks(xticks_cluster)
-    # axs[1].legend(['Gradient of BIC scores'])
     
     axs[2].plot(range_n_clusters,silhouette_score_plot,marker='+')  
     axs[2].yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
     axs[2].legend(['Silhouette scores'])
-    
-    
-    # n_cluster = np.where(bic_delta>0)[0][0]+2
+
     axs[0].title.set_text('The optimal cluster number is '+ str(n_cluster))
     plt.show() 
-    # if n_cluster > 2:
       
     print('The optimal cluster number is '+ str(n_cluster))
-    # else:
-    #     n_cluster = 6
-        # print('Set the optimal cluster number to 6')
         
     return n_cluster, aic, bic, silhouette_score, labels_arr, labels_arr_optimal
 
 def plot_dendrogram(model, **kwargs):
     # Create linkage matrix and then plot the dendrogram
-
     # create the counts of samples under each node
     counts = np.zeros(model.children_.shape[0])
     n_samples = len(model.labels_)
@@ -392,7 +335,6 @@ def plot_dendrogram(model, **kwargs):
 
     # Plot the corresponding dendrogram
     dendrogram(linkage_matrix, **kwargs)
-    
     
 def plot_cluster_dist(cluster_centers_0, cluster_centers_1=None, plot_bool=False):
     if cluster_centers_1 is None:
@@ -414,11 +356,6 @@ def pca_analysis(X, variance_explained,plot_flag=True):
         imshow_X(X,'original X')
     n_cells, n_samples = np.shape(X)
     pv, lamda, pc = pca_x(X,centralize=True)
-    # show PCA results
-    # plt.figure(figsize=(fig_width,fig_height/5))
-    # plt.plot(np.log(lamda),marker='o')
-    # plt.savefig('G:/analysis/functional_map/test.svg')
-    # choos PCs that explain >80% of the variance
     lamda_cumsum = np.cumsum(lamda)
     if plot_flag:
         fig, axes = plt.subplots(2, 1, sharex=True, figsize=(fig_width,fig_height/3))
@@ -439,8 +376,6 @@ def pca_analysis(X, variance_explained,plot_flag=True):
         sns.heatmap(pv_scaled[:,:k].T,cmap='viridis',xticklabels=False, yticklabels=False, ax=axes[0])
         axes[0].set_title(str(k)+' principal vectors,'+ str(variance_explained*100) + '% of vraiance explained')
         sns.heatmap(pv_k.T,cmap='viridis',xticklabels=False, yticklabels=False, ax=axes[1])
-    
-    
         
         # plot principal components 
         imshow_X(pc[:,:k],'principal components',sampling_rate=1)
@@ -449,8 +384,6 @@ def pca_analysis(X, variance_explained,plot_flag=True):
         plt.scatter(pc[:,0],pc[:,1],s=20,facecolors='none',edgecolors='k',marker='^',alpha=0.3)
         plt.xlabel('PC 1')
         plt.ylabel('PC 2')
-    
-    
     # reconstruct X with PCs that explain variance_explained of variance
     k =np.where(lamda_cumsum>variance_explained)[0][0]+1
     X_0_new = pc[:,:k]@pv[:,:k].T
@@ -483,8 +416,6 @@ def align_to_peak_or_trough(x,sort_idx_input=[],neg_idx=[],plot_bool=False):
     else:       
         sort_idx = np.logical_or(sort_idx_input, sort_idx_cal)
     # find peak position for positive response and trough position for negative position
-    # print(type(sort_idx))
-    # print(sort_idx.shape)
     peak_trough = np.zeros(num_neuron)
     peak_trough[np.logical_not(neg_idx)] = np.argmax(x, axis=1)[np.logical_not(neg_idx)]
     peak_trough[neg_idx] = np.argmin(x, axis=1)[neg_idx]
@@ -496,14 +427,6 @@ def align_to_peak_or_trough(x,sort_idx_input=[],neg_idx=[],plot_bool=False):
             x_sorted[i,idx_ini_sorted[i]:idx_ini_sorted[i]+x_len] = x[i,:]
         else:
             x_sorted[i,int(x_len/2):int(x_len/2)+x_len] = x[i,:]
- 
-    # x_sorted = np.zeros_like(x)
-    # idx_ini = np.maximum(0, peak_trough.astype(int)-int(x_len/2)).astype(int)
-    # idx_fin = np.minimum(x_len,peak_trough.astype(int)+int(x_len/2)).astype(int)
-    # idx_ini_sorted = np.maximum(0,int(x_len/2)-peak_trough.astype(int)+idx_ini).astype(int)
-    # idx_fin_sorted = np.minimum(x_len,int(x_len/2)-peak_trough.astype(int)+idx_fin).astype(int)
-    # for i in range(num_neuron):
-    #     x_sorted[i,idx_ini_sorted[i]:idx_fin_sorted[i]] = x[i,idx_ini[i]:idx_fin[i]]
         
     # compare sorted with unsorted  
     if plot_bool:
@@ -517,8 +440,6 @@ def sparse_pca_analysis(X, k_spca=20,plot_bool=False):
     idx_neg = np.mean(pv_spca,axis=1)<0
     pv_spca[idx_neg,:] = -pv_spca[idx_neg,:]
     
-    # plt.figure(figsize=(fig_width,k_spca*0.2))
-    # sns.heatmap(pv_spca,cmap='viridis',xticklabels=False, yticklabels=False)
     [n, p] = np.shape(X)  
     X_0 = np.zeros((n,p))
     for i in range(p):
@@ -528,29 +449,22 @@ def sparse_pca_analysis(X, k_spca=20,plot_bool=False):
     X_new_spca = np.zeros_like(X)
     for i in range(p):
         X_new_spca[:,i] =  X_0_new_spca[:,i]+np.mean(X[:,i])
-    
-    # return pc_spca, pv_spca # changed to pc_spca_pos on 20210427 
+
     idx_sorted_chirp = np.argsort(np.argmax(pv_spca,axis=1))
     pv_spca_sorted = pv_spca[idx_sorted_chirp,:]
     pc_spca_sorted = pc_spca_pos[:,idx_sorted_chirp]
     
     if plot_bool:
-        # imshow_X(pc_spca_sorted,'PCs from sparse PCA',sampling_rate=1)
         imshow_X(pv_spca_sorted,'PV from sparse PCA',sampling_rate=1)
     
     return pc_spca_sorted, pv_spca_sorted
 def pca_reconstruct(X,pc_spca,pv_spca):
-    # n = np.shape(pc_spca)[0]  
+
     p = np.shape(pv_spca)[1]
-    # X_0 = np.zeros((n,p))
-    # for i in range(p):
-    #     X_0[:,i] =  X[:,i]-np.mean(X[:,i])
-    # pc_spca_pos = X_0@pv_spca.T
     X_0_new_spca = pc_spca@pv_spca
     X_new_spca = np.zeros_like(X)
     for i in range(p):
         X_new_spca[:,i] =  X_0_new_spca[:,i]+np.mean(X[:,i])
-    # imshow_X(X_0_new_spca,'reconstruced X')
     imshow_X(X_new_spca,'reconstruced X')
     return X_new_spca
 def round_up(n, decimals=0): 
@@ -560,136 +474,6 @@ def round_up(n, decimals=0):
 def round_down(n, decimals=0):
     multiplier = 10 ** decimals
     return math.floor(n * multiplier) / multiplier
-#%% plot histograms for all genetically labeled clusters
-def figure_genetic_hist(df_results, genetic_name, columns_label, columns_name, bins_list,
-                        file_save, fac=False, figsize=(16,10), pad=1.0, alpha=1):
-    
-    fig_row = len(genetic_name)#7 # number of genetic labels
-    fig_col = len(columns_label)#6 # number of functional properties
-    if not fac:
-        fig_col = fig_col+1
-    
-    # columns_name = ['RF size', 'DSI', 'OSI', 'HI', 'LSI', 'Pref. size', 'SSI']
-    fig, axs = plt.subplots(fig_row, fig_col, sharex=False, figsize=figsize)
-    fig.tight_layout(pad=pad)
-    
-    # calculate the relative frequency for histograms
-    # for all clusters
-    freq_all = []
-    for i in range(fig_col-1):
-        if i == 0 and columns_label[i]=='rf_size':
-            hist, edges = np.histogram(np.log10(df_results[columns_label[i]]), bins_list[i])
-        else:
-            hist, edges = np.histogram(df_results[columns_label[i]], bins_list[i])
-        freq_all.append(hist/float(hist.sum())*100)
-    # for each cluster
-    freq_clusters = []
-    for i in range(fig_row):
-        freq_temp = []
-        for j in range(fig_col-1):
-            if j == 0 and columns_label[j]=='rf_size':
-                hist, edges = np.histogram(np.log10(df_results.loc[df_results['genetic_label_num']==i][columns_label[j]]), bins_list[j])
-            else:
-                hist, edges = np.histogram(df_results.loc[df_results['genetic_label_num']==i][columns_label[j]], bins_list[j])              
-            freq_temp.append(hist/float(hist.sum())*100)
-        freq_clusters.append(freq_temp)
-    
-    ylim_list = []
-    for i in range(fig_col-1):
-        max_temp = np.max(freq_all[i])
-        for j in range(fig_row):
-            if max_temp < np.max(freq_clusters[j][i]):
-                max_temp = np.max(freq_clusters[j][i])
-        ylim_list.append([0, round_up(max_temp*1.1,0)])      
-        
-        # add the relationship to artificial-stimuli cluster if fac is false
-    if not fac:
-        freq_fac = []
-        cluster_num_fac = np.unique(df_results['cluster_label_dendro_num']).size
-        bins_fac = np.linspace(1,cluster_num_fac+1,cluster_num_fac+1)
-        for i in range(fig_row):
-            data_fac_i = df_results['cluster_label_dendro_num'][df_results['genetic_label_num']==i]
-            hist_fac_i, edges_fac_i = np.histogram(cluster_num_fac-data_fac_i, bins_fac)
-            freq_fac.append(hist_fac_i/float(hist_fac_i.sum())*100)
-        freq_clusters.append(freq_fac)
-        data_fac_all = df_results['cluster_label_dendro_num']
-        hist_fac_all, edges_fac_all = np.histogram(cluster_num_fac-data_fac_all, bins_fac)
-        freq_fac_all = hist_fac_all/float(hist_fac_all.sum())*100
-        
-        ylim_fac_all = np.max(freq_fac_all)    
-        
-        ylim_fac_list = []
-        for i in range(fig_row):
-            # max_temp = np.max([ylim_fac_all,np.max(freq_fac[i])])
-            max_temp = np.max([ylim_fac_all,np.max(freq_fac)]) # set the ylim the same for all rows
-            # max_temp = np.max(freq_fac[i])
-            ylim_fac_list.append([0, round_up(max_temp*1.1,0)])     
-           
-    for i in range(fig_row):
-        for j in range(fig_col):
-            if not fac:
-                if j < fig_col-1:
-                    w = bins_list[j][1]-bins_list[j][0]
-                    axs[i,j].bar(bins_list[j][:-1], freq_all[j], width=w, align="edge", edgecolor="none", color='grey', alpha=alpha)
-                    # axs[i,j].axes.xaxis.set_ticklabels([])
-                    # axs[i,j].axes.yaxis.set_ticklabels([])
-                    
-                    axs[i,j].bar(bins_list[j][:-1], freq_clusters[i][j], width=w, align="edge", edgecolor="none", color='green', alpha=alpha)
-                    # axs[i,j].axes.xaxis.set_ticklabels([])
-                    # axs[i,j].axes.yaxis.set_ticklabels([])
-                    axs[i,j].set_ylim(ylim_list[j])
-                else:
-                    w = bins_fac[1] - bins_fac[0]
-                    axs[i,j].bar(bins_fac[:-1], freq_fac_all, width=w, align="edge", edgecolor="none", color='gray', alpha=1)
-                    axs[i,j].bar(bins_fac[:-1], freq_fac[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    axs[i,j].set_ylim(ylim_fac_list[i])
-                    axs[i,j].set_xticks([0,10,20])
-            else:
-                w = bins_list[j][1]-bins_list[j][0]
-                axs[i,j].bar(bins_list[j][:-1], freq_all[j], width=w, align="edge", edgecolor="none", color='grey', alpha=alpha)               
-                axs[i,j].bar(bins_list[j][:-1], freq_clusters[i][j], width=w, align="edge", edgecolor="none", color='green', alpha=alpha)
-                axs[i,j].set_ylim(ylim_list[j])
-                    
-                
-            # Hide the right and top spines
-            axs[i,j].spines['right'].set_visible(False)
-            axs[i,j].spines['top'].set_visible(False)
-                    # Only show ticks on the left and bottom spines
-            axs[i,j].yaxis.set_ticks_position('left')
-            axs[i,j].xaxis.set_ticks_position('bottom')
-            # set 2^x as x label for the best size 
-            if i == fig_row-1 and j == 5:
-                formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                axs[i,j].xaxis.set_major_formatter(formatter)
-            if i == fig_row-1 and j == 0:
-                formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                axs[i,j].xaxis.set_major_formatter(formatter)
-            if i+1 < fig_row:
-                axs[i,j].axis("off")
-            if j == 0:
-                axs[i,j].set_title(genetic_name[i])
-            # if i == 0:
-            #     axs[i,j].set_title(columns_name[j])
-            if i == fig_row-1:
-                if fac:
-                    axs[i,j].set_xlabel(columns_name[j])   
-                else:
-                    if j < fig_col-1:
-                       axs[i,j].set_xlabel(columns_name[j])
-                    else:
-                       axs[i,j].set_xlabel('FAC')
-                       axs[i,j].set_yticks([])
-            if j==0 and i == fig_row-1:
-                axs[i,j].set_ylabel('Relative frequency')
-            
-            # sns.distplot(df_results.iloc[:,j],ax=axs[i,j], 
-            #              bins = bins_list[j], norm_hist=True, kde=False,hist_kws={"color":"blue"})
-            # sns.distplot(df_results.loc[df_results['genetic_label_num']==i].iloc[:,j],ax=axs[i,j], 
-            #              bins = bins_list[j], norm_hist=True, kde=False,hist_kws={"color":"red"})
-    if len(file_save)>0:
-        plt.savefig(file_save+'.png',bbox_inches='tight')
-        plt.savefig(file_save+'.svg',bbox_inches='tight')
-        plt.savefig(file_save+'.pdf',bbox_inches='tight')
     
 #%% plot dendrogram for temporal profiles    
 def dendrogram_x(x, x_temporal, labels, fig_params_dendro, file_save, method='ward', metric='euclidean',fig_zoom=1,plot_bool=False):
@@ -718,7 +502,6 @@ def dendrogram_x(x, x_temporal, labels, fig_params_dendro, file_save, method='wa
     for i in range(n_cluster):
         axdendro.text(fig_params_dendro['text_offset'][0],i*axdendro_space_text+fig_params_dendro['text_offset'][1],\
               "{:2d}".format(n_cluster-i) + ' (' + "{:.1f}".format(cluster_size[i]/n_neuron*100) +')')
-        # axdendro.text(0.3,i*axdendro_space_text+6,"{:.1f}".format(cluster_size[i]/n_neuron*100))
     
     # Plot distance matrix.
     axmatrix = fig.add_axes(fig_params_dendro['ax_matrix'])
@@ -734,8 +517,6 @@ def dendrogram_x(x, x_temporal, labels, fig_params_dendro, file_save, method='wa
     if not plot_bool:
         plt.close()
     # Display and save figure.
-    # plt.show()
-    # print(file_save)
     if len(file_save)>0:
         plt.savefig(file_save+'.png',bbox_inches='tight')
         plt.savefig(file_save+'.svg',bbox_inches='tight')
@@ -756,335 +537,6 @@ def dendrogram_label(x, labels, method='ward', metric='euclidean'):
     for i in range(n_cluster):
         cluster_size[i] = np.sum(labels_dendro==i)
     return labels_dendro, cluster_size
-#%% plot temporal profiles and histograms for all clusters for artifical stimuli
-def figure_cluster_temporal_hist(df_results, cluster_label, x_cluster, cluster_size, 
-                                 temporal_list, hist_list, temporal_zooms,
-                                 columns_name, bins_list,
-                                 file_save, fig_params, fac=True, sampling_rate=5):
-    
-    cluster_num,feature_col = x_cluster.shape
-    num_neuron = np.sum(cluster_size).astype(int)
-    fig_row = cluster_num
-    fig_col_temporal = len(temporal_list)
-    fig_col_hist = len(hist_list)
-    if not fac:
-        columns_name.append('FAC')
-        fig_col_hist = fig_col_hist + 1
-
-    # print(fig_col_hist)
-    columns_label = hist_list
-    fig_col = fig_col_temporal + fig_col_hist
-    fig_col_temporal_size = []
-    for i in range(fig_col_temporal):
-        _,x_len = temporal_list[i][1].shape
-        fig_col_temporal_size.append(x_len*temporal_zooms[i])
-    
-    # single histogram should have w:h = 16:10
-    fig_height_au = cluster_num*(fig_params['height_sub'] + fig_params['space_sub'])
-    fig_width_au = np.sum(fig_col_temporal_size) \
-                    + fig_col_temporal*fig_params['space_sub'] \
-                    + fig_col_hist*(fig_params['width_sub_hist'] + fig_params['space_sub']) 
-    # define the left and bottom position and width and height for all subplots
-    # relative to figure width and height
-    dendro_left = fig_params['margin']
-    dendro_bottom = fig_params['margin']
-    dendro_width = fig_params['dendro_width']
-    dendro_height = 1 - fig_params['margin']*2
-    
-    subplots_bottom = fig_params['margin'] + (1-2*fig_params['margin'])/fig_row*np.asarray(range(fig_row))
-    subplots_width = 1-2*fig_params['margin']-dendro_width
-    subplots_left_1 = subplots_width/fig_width_au*(np.cumsum(np.asarray(fig_col_temporal_size)+fig_params['space_sub']))
-    subplots_left_2 = subplots_left_1[-1] + subplots_width/fig_width_au*(fig_params['width_sub_hist']+fig_params['space_sub'])*np.asarray(range(fig_col_hist))
-    subplots_left = fig_params['offset'] + fig_params['margin'] + dendro_width + np.concatenate((np.asarray([0]),subplots_left_1,subplots_left_2[1:]), axis=0)
-    
-    subplots_height = (1-2*fig_params['margin'])*fig_params['height_sub']/fig_height_au
-    subplots_width_array = subplots_left[1:] - subplots_left[:-1] - subplots_width/fig_width_au*fig_params['space_sub'] 
-    #add the width for the last column
-    subplots_width_array = np.append(subplots_width_array,subplots_width/fig_width_au*fig_params['width_sub_hist'])
-    
-    fig_width_dendro = fig_width*fig_params['zoom']
-    fig_height_dendro = fig_width_dendro*fig_height_au/(2*fig_width_au)
-
-    
-    
-    fig = plt.figure(figsize=[fig_width_dendro,fig_height_dendro])
-    axdendro = fig.add_axes([dendro_left, dendro_bottom, dendro_width, dendro_height])
-    link_cluster = linkage(x_cluster, method='ward')
-    dendrogram_cluster = dendrogram(link_cluster, orientation='left',distance_sort='descending',show_leaf_counts=True)
-    dendrogram_index = dendrogram_cluster['leaves']
-    # x_temporal_sorted = np.copy(x_temporal[dendrogram_index,:])
-    axdendro.set_xticks([])
-    axdendro.set_yticks([])
-    axdendro.axis('off')
-    axdendro_y_min, axdendro_y_max = axdendro.get_ylim()
-    axdendro_space_text = (axdendro_y_max - axdendro_y_min) / fig_row
-    for i in range(fig_row):
-        axdendro.text(fig_params['dendro_text_pos'],i*axdendro_space_text+3.8,\
-              "{:2d}".format(fig_row-i) + ' (' + "{:.1f}".format(cluster_size[i]/num_neuron*100) +')')
-    
-    # calculate the relative frequency for histograms
-    # for all clusters
-
-    if not fac:
-        fig_col_hist_freq = fig_col_hist - 1
-    else:
-        fig_col_hist_freq = fig_col_hist
-    freq_all = []  
-    for i in range(fig_col_hist_freq):
-        if i == 0 and columns_label[i]=='rf_size':
-            hist, edges = np.histogram(np.log10(df_results[columns_label[i]]), bins_list[i])
-        else:
-            hist, edges = np.histogram(df_results[columns_label[i]], bins_list[i])
-        freq_all.append(hist/float(hist.sum())*100)
-    # for each cluster
-    freq_clusters = []
-    for i in range(fig_row):
-        freq_temp = []
-        for j in range(fig_col_hist_freq):
-            if j == 0 and columns_label[j]=='rf_size':
-                hist, edges = np.histogram(np.log10(df_results.loc[df_results[cluster_label]==i][columns_label[j]]), bins_list[j])
-            else:
-                hist, edges = np.histogram(df_results.loc[df_results[cluster_label]==i][columns_label[j]], bins_list[j])              
-            freq_temp.append(hist/float(hist.sum())*100)
-        freq_clusters.append(freq_temp)
-        
-    ylim_list = []
-    for i in range(fig_col_hist_freq):
-        max_temp = np.max(freq_all[i])
-        for j in range(fig_row):
-            if max_temp < np.max(freq_clusters[j][i]):
-                max_temp = np.max(freq_clusters[j][i])
-        # print(max_temp)
-        ylim_list.append([0, round_up(max_temp*1.1,0)])  
-                
-    # add the relationship to artificial-stimuli cluster if fac is false
-    if not fac:
-        freq_fac = []
-        cluster_num_fac = np.unique(df_results['cluster_label_dendro_num']).size
-        bins_fac = np.linspace(1,cluster_num_fac+1,cluster_num_fac+1)
-        for i in range(cluster_num):
-            data_fac_i = df_results['cluster_label_dendro_num'][df_results[cluster_label]==i]
-            hist_fac_i, edges_fac_i = np.histogram(cluster_num_fac-data_fac_i, bins_fac)
-            freq_fac.append(hist_fac_i/float(hist_fac_i.sum())*100)
-        freq_clusters.append(freq_fac)
-        
-        ylim_fac_list = []
-        for i in range(cluster_num):
-            max_temp = np.max(freq_fac[i])
-            ylim_fac_list.append([0, round_up(max_temp*1.1,0)])    
-    
-
-  
-        
-    k = 99
-    # for i in range(2):
-    #     for j in range(2): 
-
-        
-    for i in range(fig_row):
-        for j in range(fig_col):
-            left = subplots_left[j]
-            bottom = subplots_bottom[i]
-            width = subplots_width_array[j]
-            height = subplots_height
-            ax = fig.add_axes([left,bottom,width,height])
-            if j<fig_col_temporal:
-                y = temporal_list[j][1][dendrogram_index[i],:]
-                t = np.asarray(range(1, y.shape[0]+1))/sampling_rate
-                ax.plot(t,y, color='black')   
-                ax.set_ylim([0, 1.02])       
-                # if j==0 and i == 0:
-                #     ax.set_ylabel('Normalized amplitude')                      
-            else:
-                k = j - fig_col_temporal
-                # plot histogram for all clusters
-                if not fac:
-                    if k < fig_col_hist_freq:
-                        w = bins_list[k][1]-bins_list[k][0]
-                        ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
-                    
-                        # plot histogram for neurons in a specific cluster
-                        ax.bar(bins_list[k][:-1], freq_clusters[i][k], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                        ax.set_ylim(ylim_list[k])
-                    else:
-                        w = bins_fac[1] - bins_fac[0]
-                        ax.bar(bins_fac[:-1], freq_fac[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                        ax.set_ylim(ylim_fac_list[i])
-                        ax.set_xticks([0,10,20])
-                else:
-                    # print(k)
-                    # print(j)
-                    # print(fig_col)
-                    # print(fig_col_temporal)
-                    w = bins_list[k][1]-bins_list[k][0]
-                    ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
-                
-                    # plot histogram for neurons in a specific cluster
-                    ax.bar(bins_list[k][:-1], freq_clusters[i][k], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    ax.set_ylim(ylim_list[k])
-                if i == 0:
-                    ax.set_xlabel(columns_name[k])
-                # if i == 0 and k == 0:
-                #     ax.set_ylabel('Relative frequency')
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-                # # set 2^x as x label for the best size 
-                # if i == 0 and k == 5:
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-            
-            if i > 0:
-                ax.set_xticks([]) 
-                ax.set_yticks([]) 
-                # ax.axes.xaxis.set_ticklabels([])
-                # ax.axes.yaxis.set_ticklabels([])
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                # ax.axis("off")
-            else:
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                        # Only show ticks on the left and bottom spines
-                ax.yaxis.set_ticks_position('left')
-                ax.xaxis.set_ticks_position('bottom')
-                ax.set_xticks([]) 
-                ax.set_yticks([]) 
-    if len(file_save)>0:
-        plt.savefig(file_save+'.png',bbox_inches='tight')
-        plt.savefig(file_save+'.svg',bbox_inches='tight')
-        plt.savefig(file_save+'.pdf',bbox_inches='tight')
-    
-#%% plot temporal profiles and histograms for all clusters for natural movie
-def figure_cluster_nm_temporal_hist(df_results, dendro_cluster, x_cluster, cluster_size, 
-                                 temporal_list, hist_list, temporal_zooms,
-                                 file_save, fig_params, sampling_rate=5):
-    # hist_list is the name in dataframe
-    # columns_name is the x_label
-    cluster_num,feature_col = x_cluster.shape
-    num_neuron = np.sum(cluster_size).astype(int)
-    fig_row = cluster_num
-    fig_col_temporal = len(temporal_list)
-    fig_col_hist = len(hist_list)
-    columns_label = hist_list
-    fig_col = fig_col_temporal + fig_col_hist
-    fig_col_temporal_size = []
-    for i in range(fig_col_temporal):
-        _,x_len = temporal_list[i][1].shape
-        fig_col_temporal_size.append(x_len*temporal_zooms[i])
-    
-    # single histogram should have w:h = 16:10
-    fig_height_au = cluster_num*(fig_params['height_sub'] + fig_params['space_sub'])
-    fig_width_au = np.sum(fig_col_temporal_size) \
-                    + fig_col_temporal*fig_params['space_sub'] \
-                    + fig_col_hist*(fig_params['width_sub_hist'] + fig_params['space_sub']) 
-    # define the left and bottom position and width and height for all subplots
-    # relative to figure width and height
-    dendro_left = fig_params['margin']
-    dendro_bottom = fig_params['margin']
-    dendro_width = fig_params['dendro_width'] 
-    dendro_height = 1 - fig_params['margin']*2
-    
-    subplots_bottom = fig_params['margin'] + (1-2*fig_params['margin'])/fig_row*np.asarray(range(fig_row))
-    subplots_width = 1-2*fig_params['margin']-dendro_width
-    subplots_left_1 = subplots_width/fig_width_au*(np.cumsum(np.asarray(fig_col_temporal_size)+fig_params['space_sub']))
-    subplots_left_2 = subplots_left_1[-1] + subplots_width/fig_width_au*(fig_params['width_sub_hist']+fig_params['space_sub'])*np.asarray(range(fig_col_hist))
-    subplots_left = fig_params['offset'] + dendro_width + np.concatenate((np.asarray([0]),subplots_left_1,subplots_left_2[1:]), axis=0)
-    
-    subplots_height = (1-2*fig_params['margin'])*fig_params['height_sub']/fig_height_au
-    subplots_width_array = subplots_left[1:] - subplots_left[:-1] - subplots_width/fig_width_au*fig_params['space_sub'] 
-    #add the width for the last column
-    subplots_width_array = np.append(subplots_width_array,subplots_width/fig_width_au*fig_params['width_sub_hist'])
-    
-    fig_width_dendro = fig_width*fig_params['zoom']
-    fig_height_dendro = fig_width_dendro*fig_height_au/(2*fig_width_au)
-    
-    
-    fig = plt.figure(figsize=[fig_width_dendro,fig_height_dendro])
-    axdendro = fig.add_axes([dendro_left, dendro_bottom, dendro_width, dendro_height])
-    link_cluster = linkage(dendro_cluster, method='ward')
-    dendrogram_cluster = dendrogram(link_cluster, orientation='left',distance_sort='descending',show_leaf_counts=True)
-    dendrogram_index = dendrogram_cluster['leaves']
-    # print(dendrogram_index)
-    # x_temporal_sorted = np.copy(x_temporal[dendrogram_index,:])
-    axdendro.set_xticks([])
-    axdendro.set_yticks([])
-    axdendro.axis('off')
-    axdendro_y_min, axdendro_y_max = axdendro.get_ylim()
-    axdendro_space_text = (axdendro_y_max - axdendro_y_min) / fig_row
-    for i in range(fig_row):
-        axdendro.text(fig_params['dendro_text_pos'],i*axdendro_space_text+3.8,\
-                      "{:2d}".format(fig_row-i) + ' (' + "{:.1f}".format(cluster_size[i]/num_neuron*100) +')')
-    
-    if fig_col_hist>0:
-        # calculate the relative frequency for histograms
-        # for all clusters
-        freq_all = []
-        cluster_num_fac = np.unique(df_results['cluster_label_dendro_num']).size
-        bins = np.linspace(1,cluster_num_fac+1,cluster_num_fac+1)
-        for i in range(cluster_num):
-            data_temp = df_results['cluster_label_dendro_num'][df_results['cluster_label_nm_dendro_num']==i]
-            hist, edges = np.histogram(cluster_num_fac-data_temp, bins)
-            freq_all.append(hist/float(hist.sum())*100)
-        ylim_list = []
-        for i in range(cluster_num):
-            max_temp = np.max(freq_all[i])
-            ylim_list.append([0, round_up(max_temp*1.1,0)])        
-    # for i in range(2):
-    #     for j in range(2):   
-    for i in range(fig_row):
-        for j in range(fig_col):
-            left = subplots_left[j]
-            bottom = subplots_bottom[i]
-            width = subplots_width_array[j]
-            height = subplots_height
-            ax = fig.add_axes([left,bottom,width,height])
-            if j<fig_col_temporal:
-                y = temporal_list[j][1][dendrogram_index[i],:]
-                t = np.asarray(range(1, y.shape[0]+1))/sampling_rate
-                ax.plot(t,y, color='black')   
-                ax.set_ylim([0, 1.02])  
-                dt = t[1] - t[0]
-                ax.set_xlim([t[0]-dt, t[-1]+dt]) 
-                # if j==0 and i == 0:
-                #     ax.set_ylabel('Normalized amplitude')                      
-            else:
-                # plot histogram for all neurons
-                if fig_col_hist>0:
-                    w = bins[1]-bins[0]
-                    ax.bar(bins[:-1], freq_all[i], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
-                    ax.set_ylim(ylim_list[i])
-                    ax.set_xticks([0,10,20])
-                    if i == 0:
-                        ax.set_xlabel(hist_list[0])
-                # if i == 0 and k == 0:
-                #     ax.set_ylabel('Relative frequency')
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-                # # set 2^x as x label for the best size 
-                # if i == 0 and k == 5:
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-            
-            if i > 0:
-                ax.set_xticks([]) 
-                ax.set_yticks([]) 
-                # ax.axes.xaxis.set_ticklabels([])
-                # ax.axes.yaxis.set_ticklabels([])
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                # ax.axis("off")
-            else:
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                        # Only show ticks on the left and bottom spines
-                ax.yaxis.set_ticks_position('left')
-                ax.xaxis.set_ticks_position('bottom')
-                # ax.set_xticks([]) 
-                ax.set_yticks([]) 
-    if len(file_save)>0:
-        plt.savefig(file_save+'.png',bbox_inches='tight')
-        plt.savefig(file_save+'.svg',bbox_inches='tight')
-        plt.savefig(file_save+'.pdf',bbox_inches='tight')
 
 #%% scatter plot of rf positions for all cluster
 def figure_scatter_rf_pos_cluster(df_rf, label, fig_params, file_save,color_id=None):
@@ -1151,22 +603,15 @@ def figure_scatter_rf_pos_cluster(df_rf, label, fig_params, file_save,color_id=N
             azi = df_rf['rf_azimuth'][df_rf[label]==k_rev]
             ele = df_rf['rf_elevation'][df_rf[label]==k_rev]
             img_id = df_rf['image_id'][df_rf[label]==k_rev]
-            # print(img_id.shape)
-            # print(np.unique(img_id).shape)
+
             if color_id == 'mouse_id':
                 animal_id = df_rf['mouse_id'][df_rf[label]==k_rev]
-                # print(animal_id.shape)
-                # print(np.unique(animal_id).shape)
+
             elif color_id == 'genetic_id':
                 genetic_id = df_rf['genetic_label_num'][df_rf[label]==k_rev] 
-            # img_id = df_rf[color_id][df_rf[label]==k_rev]
+            
             if len(azi)>0:                
                 ax = fig.add_axes([left,bottom,width,height])
-                # plot rf positions of all neurons
-                # ax.scatter(df_rf['rf_azimuth'], df_rf['rf_elevation'], s=1, color='grey',alpha=0.1)
-                # ax.set_aspect('equal')
-                # plot the median position
-                # ax.scatter(np.nanmedian(df_rf['rf_azimuth']), np.nanmedian(df_rf['rf_elevation']), s=20, color='black',marker='x',alpha=1)
                 ax.plot([xlim_min,xlim_max],[np.nanmedian(df_rf['rf_elevation']),np.nanmedian(df_rf['rf_elevation'])],color='red',linewidth=0.2)
                 ax.plot([np.nanmedian(df_rf['rf_azimuth']),np.nanmedian(df_rf['rf_azimuth'])],[ylim_min,ylim_max],color='red',linewidth=0.2)
                 ax.set_aspect('equal')
@@ -1211,11 +656,6 @@ def figure_scatter_rf_pos_cluster(df_rf, label, fig_params, file_save,color_id=N
                 # Only show ticks on the left and bottom spines
                 ax.yaxis.set_ticks_position('left')
                 ax.xaxis.set_ticks_position('bottom')
-                # # set ticks and ticklabels invisible
-                # ax.set_xticks([]) 
-                # ax.set_yticks([]) 
-                # ax.axes.xaxis.set_ticklabels([])
-                # ax.axes.yaxis.set_ticklabels([])
                 ax.grid()
                 ax.text(xlim_min+xlim_range/20,ylim_min+ylim_range/20,str(k+1),size='xx-large',weight='bold',color='red')
                 # print(str(xlim_min)+','+str(xlim_max))
@@ -1261,173 +701,6 @@ def temporal_list_generate(X_temporal_cluster,X_temporal_cluster_error, len_list
                  ('color_temporal', color_temporal_cluster,color_temporal_cluster_error)]
     return temporal_list
 
-#%% plot temporal profiles and histograms for all clusters for artifical stimuli
-def figure_cluster_genetic_temporal_hist(df_results, cluster_label, x_cluster,
-                                 temporal_list, hist_list, temporal_zooms,
-                                 columns_name, bins_list,
-                                 file_save, fig_params, sampling_rate=5):
-    
-    cluster_num,feature_col = x_cluster.shape
-    cluster_size = np.zeros(cluster_num)
-    for i in range(cluster_num):
-        cluster_size[i] = np.sum(cluster_label == i)
-    # num_neuron = np.sum(cluster_size).astype(int)
-    fig_row = cluster_num
-    fig_col_temporal = len(temporal_list)
-    hist_list.append('FAC')
-    columns_name.append('FAC')
-    fig_col_hist = len(hist_list)
-    columns_label = hist_list
-    fig_col = fig_col_temporal + fig_col_hist
-    fig_col_temporal_size = []
-    for i in range(fig_col_temporal):
-        _,x_len = temporal_list[i][1].shape
-        fig_col_temporal_size.append(x_len*temporal_zooms[i])
-    
-    # single histogram should have w:h = 16:10
-    fig_height_au = cluster_num*(fig_params['height_sub'] + fig_params['space_sub'])
-    fig_width_au = np.sum(fig_col_temporal_size) \
-                    + fig_col_temporal*fig_params['space_sub'] \
-                    + fig_col_hist*(fig_params['width_sub_hist'] + fig_params['space_sub']) 
-    # define the left and bottom position and width and height for all subplots
-    # relative to figure width and height
-
-    
-    subplots_bottom = fig_params['margin'] + (1-2*fig_params['margin'])/fig_row*np.asarray(range(fig_row))
-    subplots_width = 1-2*fig_params['margin']
-    subplots_left_1 = subplots_width/fig_width_au*(np.cumsum(np.asarray(fig_col_temporal_size)+fig_params['space_sub']))
-    subplots_left_2 = subplots_left_1[-1] + subplots_width/fig_width_au*(fig_params['width_sub_hist']+fig_params['space_sub'])*np.asarray(range(fig_col_hist))
-    subplots_left = 0.03 + fig_params['margin'] + np.concatenate((np.asarray([0]),subplots_left_1,subplots_left_2[1:]), axis=0)
-    
-    subplots_height = (1-2*fig_params['margin'])*fig_params['height_sub']/fig_height_au
-    subplots_width_array = subplots_left[1:] - subplots_left[:-1] - subplots_width/fig_width_au*fig_params['space_sub'] 
-    #add the width for the last column
-    subplots_width_array = np.append(subplots_width_array,subplots_width/fig_width_au*fig_params['width_sub_hist'])
-    
-    fig_width_cluster = fig_width*fig_params['zoom']
-    fig_height_cluster = fig_width_cluster*fig_height_au/(2*fig_width_au)
-
-    
-    
-    fig = plt.figure(figsize=[fig_width_cluster,fig_height_cluster])
-    
-    # for i in range(fig_row):
-    #     axdendro.text(fig_params['dendro_text_pos'],i*axdendro_space_text+3.8,\
-    #           "{:2d}".format(fig_row-i) + ' (' + "{:.1f}".format(cluster_size[i]/num_neuron*100) +')')
-    
-    # calculate the relative frequency for histograms
-    # for all clusters
-    
-    
-    freq_all = []
-    for i in range(fig_col_hist-1):
-        if i == 0 and columns_label[i]=='rf_size':
-            hist, edges = np.histogram(np.log10(df_results[columns_label[i]]), bins_list[i])
-        else:
-            hist, edges = np.histogram(df_results[columns_label[i]], bins_list[i])
-        freq_all.append(hist/float(hist.sum())*100)
-    # for each cluster
-    freq_clusters = []
-    for i in range(fig_row):
-        freq_temp = []
-        for j in range(fig_col_hist-1):
-            if j == 0  and columns_label[j]=='rf_size':
-                hist, edges = np.histogram(np.log10(df_results.loc[df_results[cluster_label]==i][columns_label[j]]), bins_list[j])
-            else:
-                hist, edges = np.histogram(df_results.loc[df_results[cluster_label]==i][columns_label[j]], bins_list[j])              
-            freq_temp.append(hist/float(hist.sum())*100)
-        freq_clusters.append(freq_temp)
-        
-    freq_fac = []
-    cluster_num_fac = np.unique(df_results['cluster_label_dendro_num']).size
-    bins_fac = np.linspace(1,cluster_num_fac+1,cluster_num_fac+1)
-    for i in range(cluster_num):
-        data_fac_i = df_results['cluster_label_dendro_num'][df_results[cluster_label]==i]
-        hist_fac_i, edges_fac_i = np.histogram(cluster_num_fac-data_fac_i, bins_fac)
-        freq_fac.append(hist_fac_i/float(hist_fac_i.sum())*100)
-    freq_clusters.append(freq_fac)
-    
-    ylim_list = []
-    for i in range(fig_col_hist-1):
-        max_temp = np.max(freq_all[i])
-        for j in range(fig_row):
-            if max_temp < np.max(freq_clusters[j][i]):
-                max_temp = np.max(freq_clusters[j][i])
-        ylim_list.append([0, round_up(max_temp*1.1,0)])  
-        
-    ylim_fac_list = []
-    for i in range(cluster_num):
-        max_temp = np.max(freq_fac[i])
-        ylim_fac_list.append([0, round_up(max_temp*1.1,0)])   
-           
-    
-    k = 99
-    # for i in range(2):
-    #     for j in range(2): 
-    for i in range(fig_row):
-        for j in range(fig_col):
-            left = subplots_left[j]
-            bottom = subplots_bottom[fig_row-i-1]
-            width = subplots_width_array[j]
-            height = subplots_height
-            ax = fig.add_axes([left,bottom,width,height])
-            if j<fig_col_temporal:
-                y = temporal_list[j][1][i,:]
-                t = np.asarray(range(1, y.shape[0]+1))/sampling_rate
-                ax.plot(t,y, color='black')   
-                ax.set_ylim([0, 1.02])       
-                # if j==0 and i == 0:
-                #     ax.set_ylabel('Normalized amplitude')                      
-            else:
-                k = j - fig_col_temporal
-                if k < fig_col_hist-1:
-                    # plot histogram for all neurons
-                    w = bins_list[k][1]-bins_list[k][0]
-                    ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
-                    
-                    # plot histogram for neurons in a specific cluster
-                       
-    
-                    ax.bar(bins_list[k][:-1], freq_clusters[i][k], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    ax.set_ylim(ylim_list[k])
-                else:
-                    w = bins_fac[1] - bins_fac[0]
-                    ax.bar(bins_fac[:-1], freq_fac[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    ax.set_ylim(ylim_fac_list[i])
-                    ax.set_xticks([0,10,20])
-                
-                if i == 0:
-                    ax.set_xlabel(columns_name[k])
-                # if i == 0 and k == 0:
-                #     ax.set_ylabel('Relative frequency')
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-                # # set 2^x as x label for the best size 
-                # if i == 0 and k == 5:
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-            
-            if i > 0:
-                ax.set_xticks([]) 
-                ax.set_yticks([]) 
-                # ax.axes.xaxis.set_ticklabels([])
-                # ax.axes.yaxis.set_ticklabels([])
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                # ax.axis("off")
-            else:
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                        # Only show ticks on the left and bottom spines
-                ax.yaxis.set_ticks_position('left')
-                ax.xaxis.set_ticks_position('bottom')
-                ax.set_xticks([]) 
-                ax.set_yticks([]) 
-    if len(file_save)>0:
-        plt.savefig(file_save+'.png',bbox_inches='tight')
-        plt.savefig(file_save+'.svg',bbox_inches='tight')
-        plt.savefig(file_save+'.pdf',bbox_inches='tight')
-    return freq_fac
 #%%       
 def set_box_color(bp, color):
     plt.setp(bp['boxes'], color=color)
@@ -1508,8 +781,7 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
     axdendro_y_min, axdendro_y_max = axdendro.get_ylim()
     axdendro_space_text = (axdendro_y_max - axdendro_y_min) / fig_row
     for i in range(fig_row):
-        # axdendro.text(fig_params['dendro_text_pos'],i*axdendro_space_text+3.8,\
-        #       "{:2d}".format(fig_row-i) + ' (' + "{:.1f}".format(cluster_size[i]/num_neuron*100) +')',fontsize=18)
+
         axdendro.text(fig_params['dendro_text_pos'],i*axdendro_space_text+3.8,"{:2d}".format(fig_row-i),fontsize=18)
         axdendro.text(fig_params['dendro_text_pos']+1.9,i*axdendro_space_text+0.8,
                       ' (' + "{:.1f}".format(cluster_size[i]/num_neuron*100) +')',fontsize=18)
@@ -1620,10 +892,7 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
                 t = np.asarray(range(1, y.shape[0]+1))/sampling_rate
                 if norm_flag:
                     ax.plot(t,norm_x(y),color='grey') #also plot normalized temporal proflies
-                    # if error:
-                    #     y_error = temporal_list[j][2][dendrogram_index[i],:]
-                    #     ax.fill_between(t,y-y_error,y+y_error,color='lightgrey')
-                    
+
                 else:
                     ax.plot(t,y, color='black')   
                     if error:
@@ -1644,13 +913,10 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
                         x_max = data_box_all[k].max()
                     x_range = x_max - x_min
                     x_margin = x_range*0.05
-                    # w = bins_list[k][1]-bins_list[k][0]
-                    # ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
+
                     # plot histogram for neurons in a specific cluster
                     if violin:
-                        # _data = data_box_all[k]
-                        # _filtered_data = _data[~np.isnan(_data)]
-                        # violin_plot(_filtered_data,ax)
+
                         _data = data_box_clusters[i][k]
                         _filtered_data = _data[~np.isnan(_data)]
                         if hist_list[k] in box_flag:
@@ -1687,11 +953,7 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
                             ax.set_ylim([0.2,1.3])
                         
                         ax.set_xlim([x_min-x_margin,x_max+x_margin])
-                        # # xlim_barplot.append(ax.get_xlim())
-                        # left_xlim, right_xlim = ax.get_xlim()
-                        # xlim_barplot.append([np.min([_filtered_data.min(),left_xlim]),
-                        #                      np.max([_filtered_data.max(),right_xlim])])
-                        # ax.set_xlim(xlim_barplot[k])
+
 
                     else:
                         if violin:
@@ -1701,18 +963,7 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
                                 ax.set_ylim([0.5,1.5])
                         else:
                             ax.set_ylim([0.45,1.55])
-                        # print(str(i))
-                        # print(str(k))
-                        # print(type(xlim_barplot))
-                        # print(xlim_barplot[k])
-                        # ax.set_xlim(xlim_barplot[k])
                         ax.set_xlim([x_min-x_margin,x_max+x_margin])
-                    # if i == 2 and k == 5:
-                    #     print(data_box_clusters[i][k])
-                    #     plt.figure()
-                    #     plt.hist(data_box_clusters[i][k],color='blue')
-                    #     plt.figure()
-                    #     plt.hist(data_box_all[k],color='black')
                 
                 else:
                     if (not fac) and genetic_comp:
@@ -1743,21 +994,6 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
                             ax.set_ylim(ylim_genetic_all)
                             ax.set_xticks([0,3,6]) # related to the number of genetic mice lines
                     
-                    # # print(k)
-                    # # print(j)
-                    # # print(fig_col)
-                    # # print(fig_col_temporal)
-                    # # w = bins_list[k][1]-bins_list[k][0]
-                    # # ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
-                    # if i == 0:
-                    #     bp = plt.boxplot(data_box_all[k], positions=range(0,1), notch=False, vert=False, whis=(0, 100))
-                    #     set_box_color(bp,'grey')
-                    # # plot histogram for neurons in a specific cluster
-                    # # ax.bar(bins_list[k][:-1], freq_clusters[i][k], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    # # ax.set_ylim(ylim_list[k])
-                    # bp = plt.boxplot(data_box_clusters[i][k], positions=range(1,2), notch=False, vert=False, whis=(0, 100))
-                    # set_box_color(bp,'green')
-                    # ax.set_ylim([-0.5,1.5])
                 if i == 0:
                     ax.set_xlabel(columns_name[k],fontsize=18)
             
@@ -1769,9 +1005,7 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
                 ax.xaxis.set_ticks_position('bottom')
                 if k < fig_col_hist_freq:
                     ax.set_yticks([]) 
-                    # if k == 0:
-                    #     formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                    #     ax.xaxis.set_major_formatter(formatter)
+
                     if hist_list[k] == 'best_size':
                         ax.set_xticks([1,5]) # set x_tick for the best size
                         formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
@@ -1790,331 +1024,17 @@ def figure_cluster_temporal_box(df_results, cluster_label, x_cluster, cluster_si
             else:
                 ax.set_xticks([]) 
                 ax.set_yticks([]) 
-                # ax.axes.xaxis.set_ticklabels([])
-                # ax.axes.yaxis.set_ticklabels([])
+
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
-                # ax.axis("off")
+
     if len(file_save)>0:
         plt.savefig(file_save+'.png',bbox_inches='tight')
         plt.savefig(file_save+'.svg',bbox_inches='tight')
         plt.savefig(file_save+'.pdf',bbox_inches='tight')
         
     return data_box_all, data_box_clusters, freq_genetic
-#%% plot temporal profiles and violin plots of functional properties for all clusters for artifical stimuli
-def figure_cluster_temporal_violin(df_results, cluster_label, x_cluster, cluster_size, 
-                                 temporal_list, hist_list, temporal_zooms,
-                                 columns_name, bins_list,
-                                 file_save, fig_params, fac=True, genetic_comp=False, sampling_rate=5,violin=True):
 
-    # fac: add the relationship to artificial-stimuli cluster if fac is false
-    # genetic_comp: plot the genetic composition for each cluster
-    cluster_num,feature_col = x_cluster.shape
-    num_neuron = np.sum(cluster_size).astype(int)
-    fig_row = cluster_num
-    fig_col_temporal = len(temporal_list)
-    fig_col_hist = len(hist_list)
-    if not fac:
-        columns_name.append('FAC')
-        fig_col_hist = fig_col_hist + 1
-        
-    if genetic_comp:
-        columns_name.append('genetic_comp')
-        fig_col_hist = fig_col_hist + 1
-    # print(fig_col_hist)
-    columns_label = hist_list
-    fig_col = fig_col_temporal + fig_col_hist
-    fig_col_temporal_size = []
-    for i in range(fig_col_temporal):
-        _,x_len = temporal_list[i][1].shape
-        fig_col_temporal_size.append(x_len*temporal_zooms[i])
-    
-    # single histogram should have w:h = 16:10
-    fig_height_au = cluster_num*(fig_params['height_sub'] + fig_params['space_sub'])
-    fig_width_au = np.sum(fig_col_temporal_size) \
-                    + fig_col_temporal*fig_params['space_sub'] \
-                    + fig_col_hist*(fig_params['width_sub_hist'] + fig_params['space_sub']) 
-    # define the left and bottom position and width and height for all subplots
-    # relative to figure width and height
-    dendro_left = fig_params['margin']
-    dendro_bottom = fig_params['margin']
-    dendro_width = fig_params['dendro_width']
-    dendro_height = 1 - fig_params['margin']*2
-    
-    subplots_bottom = fig_params['margin'] + (1-2*fig_params['margin'])/fig_row*np.asarray(range(fig_row))
-    subplots_width = 1-2*fig_params['margin']-dendro_width
-    subplots_left_1 = subplots_width/fig_width_au*(np.cumsum(np.asarray(fig_col_temporal_size)+fig_params['space_sub']))
-    subplots_left_2 = subplots_left_1[-1] + subplots_width/fig_width_au*(fig_params['width_sub_hist']+fig_params['space_sub'])*np.asarray(range(fig_col_hist))
-    subplots_left = fig_params['offset'] + fig_params['margin'] + dendro_width + np.concatenate((np.asarray([0]),subplots_left_1,subplots_left_2[1:]), axis=0)
-    
-    subplots_height = (1-2*fig_params['margin'])*fig_params['height_sub']/fig_height_au
-    subplots_width_array = subplots_left[1:] - subplots_left[:-1] - subplots_width/fig_width_au*fig_params['space_sub'] 
-    #add the width for the last column
-    subplots_width_array = np.append(subplots_width_array,subplots_width/fig_width_au*fig_params['width_sub_hist'])
-    
-    fig_width_dendro = fig_width*fig_params['zoom']
-    fig_height_dendro = fig_width_dendro*fig_height_au/(2*fig_width_au)
-
-    
-    
-    fig = plt.figure(figsize=[fig_width_dendro,fig_height_dendro])
-    axdendro = fig.add_axes([dendro_left, dendro_bottom, dendro_width, dendro_height])
-    link_cluster = linkage(x_cluster, method='ward')
-    dendrogram_cluster = dendrogram(link_cluster, orientation='left',distance_sort='descending',show_leaf_counts=True)
-    dendrogram_index = dendrogram_cluster['leaves']
-    # x_temporal_sorted = np.copy(x_temporal[dendrogram_index,:])
-    axdendro.set_xticks([])
-    axdendro.set_yticks([])
-    axdendro.axis('off')
-    axdendro_y_min, axdendro_y_max = axdendro.get_ylim()
-    axdendro_space_text = (axdendro_y_max - axdendro_y_min) / fig_row
-    for i in range(fig_row):
-        axdendro.text(fig_params['dendro_text_pos'],i*axdendro_space_text+3.8,\
-              "{:2d}".format(fig_row-i) + ' (' + "{:.1f}".format(cluster_size[i]/num_neuron*100) +')')
-    
-    
-    # make the list for data for all clusters
-
-    fig_col_hist_freq = fig_col_hist
-    if not fac:
-        fig_col_hist_freq = fig_col_hist_freq - 1
-
-        
-    if genetic_comp:
-        fig_col_hist_freq = fig_col_hist_freq - 1
-
-        
-    data_box_all = []  
-    for i in range(fig_col_hist_freq):
-        if i == 0 and columns_label[i]=='rf_size':
-            data_box_temp_raw = np.log10(df_results[columns_label[i]])
-            # data_box_temp_raw = df_results[columns_label[i]]
-            data_box_temp = data_box_temp_raw[~np.isnan(data_box_temp_raw)]
-        else:
-            # print(i)
-            data_box_temp = df_results[columns_label[i]]
-        data_box_all.append(data_box_temp)
-    # for each cluster
-    data_box_clusters = []
-    for i in range(fig_row):
-        data_box_list_temp = []
-        for j in range(fig_col_hist_freq):
-            if j == 0 and columns_label[j]=='rf_size':
-                data_box_temp_raw = np.log10(df_results.loc[df_results[cluster_label]==i][columns_label[j]])
-                # data_box_temp_raw = df_results.loc[df_results[cluster_label]==i][columns_label[j]]
-                data_box_temp = data_box_temp_raw[~np.isnan(data_box_temp_raw)]
-            else:
-                data_box_temp = df_results.loc[df_results[cluster_label]==i][columns_label[j]]             
-            data_box_list_temp.append(data_box_temp)
-        data_box_clusters.append(data_box_list_temp)
-        
-    # ylim_list = []
-    # for i in range(fig_col_hist_freq):
-    #     max_temp = np.max(freq_all[i])
-    #     for j in range(fig_row):
-    #         if max_temp < np.max(freq_clusters[j][i]):
-    #             max_temp = np.max(freq_clusters[j][i])
-    #     ylim_list.append([0, round_up(max_temp*1.1,0)])  
-                
-    # add the relationship to artificial-stimuli cluster if fac is false
-    if not fac:
-        freq_fac = []
-        cluster_num_fac = np.unique(df_results['cluster_label_dendro_num']).size
-        bins_fac = np.linspace(1,cluster_num_fac+1,cluster_num_fac+1)
-        for i in range(cluster_num):
-            data_fac_i = df_results['cluster_label_dendro_num'][df_results[cluster_label]==i]
-            hist_fac_i, edges_fac_i = np.histogram(cluster_num_fac-data_fac_i, bins_fac)
-            freq_fac.append(hist_fac_i/float(hist_fac_i.sum())*100)
-        # freq_clusters.append(freq_fac)
-        
-        ylim_fac_list = []
-        for i in range(cluster_num):
-            max_temp = np.max(freq_fac[i])
-            ylim_fac_list.append([0, round_up(max_temp*1.1,0)])    
-    
-    # add the genetic compostion for each cluster
-    if genetic_comp:
-        freq_genetic = []
-        cluster_num_genetic = np.unique(df_results['genetic_label_num']).size
-        bins_genetic = np.linspace(1,cluster_num_genetic+1,cluster_num_genetic+1)
-        for i in range(cluster_num):
-            freq_genetic_i = np.zeros(cluster_num_genetic)
-            for j in range(cluster_num_genetic):
-                freq_genetic_i[j] = (np.sum(np.logical_and([df_results[cluster_label]==i],
-                                                           df_results['genetic_label_num']==j))
-                                     /np.sum(df_results['genetic_label_num']==j))*100
-            freq_genetic.append(freq_genetic_i)
-            
-        ylim_genetic_list = []        
-        max_temp = np.zeros(cluster_num)
-        for i in range(cluster_num):
-            max_temp[i] = np.max(freq_genetic[i])
-            ylim_genetic_list.append([0, round_up(max_temp[i]*1.1,0)])           
-        ylim_genetic_all = [0,round_up(np.max(max_temp)*1.1,0)] 
-
-  
-        
-    k = 99
-
-    xlim_barplot = []   
-    # for i in range(2):
-    #     for j in range(2): 
-    for i in range(fig_row):
-        for j in range(fig_col):
-        # for j in range(2): 
-            left = subplots_left[j]
-            bottom = subplots_bottom[i]
-            # bottom = subplots_bottom[fig_row-i-1] # this does not work becasue of the dendrogram
-            width = subplots_width_array[j]
-            height = subplots_height
-            ax = fig.add_axes([left,bottom,width,height])
-            if j<fig_col_temporal:
-                y = temporal_list[j][1][dendrogram_index[i],:]
-                t = np.asarray(range(1, y.shape[0]+1))/sampling_rate
-                ax.plot(t,y, color='black')   
-                ax.set_ylim([0, 1.02])       
-                # if j==0 and i == 0:
-                #     ax.set_ylabel('Normalized amplitude')                      
-            else:
-                k = j - fig_col_temporal
-                # plot histogram for all clusters
-                if k < fig_col_hist_freq:
-                    # w = bins_list[k][1]-bins_list[k][0]
-                    # ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
-                    # plot histogram for neurons in a specific cluster
-                    if violin:
-                        _data = data_box_all[k]
-                        _filtered_data = _data[~np.isnan(_data)]
-                        sns.violinplot(x=_filtered_data, color='grey')
-                        _data = data_box_clusters[i][k]
-                        _filtered_data = _data[~np.isnan(_data)]
-                        sns.violinplot(x=_filtered_data, color='green')
-                    else:
-                        _data = data_box_clusters[i][k]
-                        _filtered_data = _data[~np.isnan(_data)]
-                        bp = plt.boxplot(_filtered_data, positions=range(1,2), notch=False, vert=False, whis=(0, 100))
-                        set_box_color(bp,'green')
-                    if i == 0:
-                        _data = data_box_all[k]
-                        _filtered_data = _data[~np.isnan(_data)]
-                        if violin:
-                            # sns.violinplot(x=_filtered_data, positions=np.asarray(range(0,1))+0.5, vert=False, color='grey')
-                            ax.set_ylim([-1,1])
-                        else:
-                            bp = plt.boxplot(_filtered_data, positions=np.asarray(range(0,1))+0.5, notch=False, vert=False, whis=(0, 100))
-                            set_box_color(bp,'grey')
-                            ax.set_ylim([0.2,1.3])
-                       
-                        # xlim_barplot.append(ax.get_xlim())
-                        left_xlim, right_xlim = ax.get_xlim()
-                        xlim_barplot.append([np.min([_filtered_data.min(),left_xlim]),
-                                             np.max([_filtered_data.max(),right_xlim])])
-                        ax.set_xlim(xlim_barplot[k])
-                    else:
-                        if violin:
-                            ax.set_ylim([-1,1])
-                        else:
-                            ax.set_ylim([0.45,1.55])
-                        # print(str(i))
-                        # print(str(k))
-                        # print(type(xlim_barplot))
-                        # print(xlim_barplot[k])
-                        ax.set_xlim(xlim_barplot[k])
-                    # if i == 2 and k == 5:
-                    #     print(data_box_clusters[i][k])
-                    #     plt.figure()
-                    #     plt.hist(data_box_clusters[i][k],color='blue')
-                    #     plt.figure()
-                    #     plt.hist(data_box_all[k],color='black')
-                
-                else:
-                    if (not fac) and genetic_comp:
-                        if k == fig_col_hist_freq:
-                            # plot the relationship to FAC
-                            w = bins_fac[1] - bins_fac[0]
-                            ax.bar(bins_fac[:-1], freq_fac[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                            ax.set_ylim(ylim_fac_list[i])
-                            ax.set_xticks([0,10,20]) #related to the number of cluster
-                        else:
-                            w = bins_genetic[1] - bins_genetic[0]
-                            ax.bar(bins_genetic[:-1], freq_genetic[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                            # ax.set_ylim(ylim_genetic_list[i])
-                            ax.set_ylim(ylim_genetic_all)
-                            ax.set_xticks([0,3,6]) # related to the number of genetic mice lines
-                    else:
-                        if not fac:  
-                        # plot the relationship to FAC
-                            w = bins_fac[1] - bins_fac[0]
-                            ax.bar(bins_fac[:-1], freq_fac[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                            ax.set_ylim(ylim_fac_list[i])
-                            ax.set_xticks([0,10,20]) #related to the number of cluster
-                        if genetic_comp:
-                            # genetic compostion for each cluster
-                            w = bins_genetic[1] - bins_genetic[0]
-                            ax.bar(bins_genetic[:-1], freq_genetic[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                            # ax.set_ylim(ylim_genetic_list[i])
-                            ax.set_ylim(ylim_genetic_all)
-                            ax.set_xticks([0,3,6]) # related to the number of genetic mice lines
-                    
-                    # # print(k)
-                    # # print(j)
-                    # # print(fig_col)
-                    # # print(fig_col_temporal)
-                    # # w = bins_list[k][1]-bins_list[k][0]
-                    # # ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
-                    # if i == 0:
-                    #     bp = plt.boxplot(data_box_all[k], positions=range(0,1), notch=False, vert=False, whis=(0, 100))
-                    #     set_box_color(bp,'grey')
-                    # # plot histogram for neurons in a specific cluster
-                    # # ax.bar(bins_list[k][:-1], freq_clusters[i][k], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    # # ax.set_ylim(ylim_list[k])
-                    # bp = plt.boxplot(data_box_clusters[i][k], positions=range(1,2), notch=False, vert=False, whis=(0, 100))
-                    # set_box_color(bp,'green')
-                    # ax.set_ylim([-0.5,1.5])
-                if i == 0:
-                    ax.set_xlabel(columns_name[k])
-                # if i == 0 and k == 0:
-                #     ax.set_ylabel('Relative frequency')
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-                # # set 2^x as x label for the best size 
-                # if i == 0 and k == 5:
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-            
-            if i == 0:
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                        # Only show ticks on the left and bottom spines
-                ax.yaxis.set_ticks_position('left')
-                ax.xaxis.set_ticks_position('bottom')
-                if k < fig_col_hist_freq:
-                    ax.set_yticks([]) 
-                    formatter = FuncFormatter(lambda x_val, tick_pos: "{:g}".format((x_val)))
-                    ax.xaxis.set_major_formatter(formatter)
-                    # if k == 0:
-                    #     formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                    #     ax.xaxis.set_major_formatter(formatter)
-                    # if k == 5:
-                    #     formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                    #     ax.xaxis.set_major_formatter(formatter)
-                else:
-                    ax.set_xticks([])    
-                    ax.set_yticks([]) 
-            else:
-                ax.set_xticks([]) 
-                ax.set_yticks([]) 
-                # ax.axes.xaxis.set_ticklabels([])
-                # ax.axes.yaxis.set_ticklabels([])
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                # ax.axis("off")
-    if len(file_save)>0:
-        plt.savefig(file_save+'.png',bbox_inches='tight')
-        plt.savefig(file_save+'.svg',bbox_inches='tight')
-        plt.savefig(file_save+'.pdf',bbox_inches='tight')
-        
-    return data_box_all, data_box_clusters
 #%% plot genetica labels
 def scatter_plot(x,y,hue,x_lim,y_lim):
     fig = plt.figure(figsize=(10,10))
@@ -2181,7 +1101,6 @@ def figure_cluster_genetic_temporal_box(df_results, cluster_label, x_cluster,
     
     
     fig = plt.figure(figsize=[fig_width_cluster,fig_height_cluster])
-
     
     # make the list for data for all clusters
 
@@ -2213,13 +1132,6 @@ def figure_cluster_genetic_temporal_box(df_results, cluster_label, x_cluster,
             data_box_list_temp.append(data_box_temp)
         data_box_clusters.append(data_box_list_temp)
         
-    # ylim_list = []
-    # for i in range(fig_col_hist_freq):
-    #     max_temp = np.max(freq_all[i])
-    #     for j in range(fig_row):
-    #         if max_temp < np.max(freq_clusters[j][i]):
-    #             max_temp = np.max(freq_clusters[j][i])
-    #     ylim_list.append([0, round_up(max_temp*1.1,0)])  
                 
     # add the relationship to artificial-stimuli cluster if fac is false
     if not fac:
@@ -2262,15 +1174,13 @@ def figure_cluster_genetic_temporal_box(df_results, cluster_label, x_cluster,
                 ax.plot(t,y, color='black')   
                 ax.fill_between(t, y-ye, y+ye, color='lightgrey')
                 ax.set_ylim([0, 1.02])       
-                # if j==0 and i == 0:
-                #     ax.set_ylabel('Normalized amplitude')                      
+                   
             else:
                 k = j - fig_col_temporal
                 # plot histogram for all clusters
                 if not fac:
                     if k < fig_col_hist_freq:
-                        # w = bins_list[k][1]-bins_list[k][0]
-                        # ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
+    
                         _data = data_box_all[k]
                         _filtered_data = _data[~np.isnan(_data)]
                         bp = plt.boxplot(_filtered_data, positions=range(0,1), notch=False, vert=False, whis=(0, 100))
@@ -2286,36 +1196,20 @@ def figure_cluster_genetic_temporal_box(df_results, cluster_label, x_cluster,
                         w = bins_fac[1] - bins_fac[0]
                         ax.bar(bins_fac[:-1], freq_fac[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
                         ax.set_ylim(ylim_fac_list[i])
-                        # ax.set_xticks([0,10,20])
+
                 else:
-                    # print(k)
-                    # print(j)
-                    # print(fig_col)
-                    # print(fig_col_temporal)
-                    # w = bins_list[k][1]-bins_list[k][0]
-                    # ax.bar(bins_list[k][:-1], freq_all[k], width=w, align="edge", edgecolor="none", color='grey', alpha=1)
+ 
                     _data = data_box_all[k]
                     _filtered_data = _data[~np.isnan(_data)]
                     bp = plt.boxplot(_filtered_data, positions=range(0,1), notch=False, vert=False, whis=(0, 100))
                     set_box_color(bp,'grey')
-                    # plot histogram for neurons in a specific cluster
-                    # ax.bar(bins_list[k][:-1], freq_clusters[i][k], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    # ax.set_ylim(ylim_list[k])
+ 
                     _data = data_box_clusters[i][k]
                     _filtered_data = _data[~np.isnan(_data)]
                     bp = plt.boxplot(_filtered_data, positions=range(1,2), notch=False, vert=False, whis=(0, 100))
                     set_box_color(bp,'green')
                     ax.set_ylim([-0.5,1.5])
-                # if i == 0:
-                #     ax.set_xlabel(columns_name[k])
-                # if i == 0 and k == 0:
-                #     ax.set_ylabel('Relative frequency')
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
-                # # set 2^x as x label for the best size 
-                # if i == 0 and k == 5:
-                #     formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                #     ax.xaxis.set_major_formatter(formatter)
+    
             
             if i > 0:
                 ax.set_xticks([]) 
@@ -2339,136 +1233,6 @@ def figure_cluster_genetic_temporal_box(df_results, cluster_label, x_cluster,
         plt.savefig(file_save+'.pdf',bbox_inches='tight')
         
     return freq_fac_all, np.asarray(freq_fac), data_box_all,data_box_clusters
-
-
-#%% plot box and histograms for all genetically labeled clusters
-def figure_box_genetic(df_results, genetic_name, columns_label, columns_name, bins_list,
-                        file_save, fac=False, figsize=(16,10), pad=1.0, alpha=1):
-    
-    fig_row = len(genetic_name)#7 # number of genetic labels
-    fig_col = len(columns_label)#6 # number of functional properties
-    if not fac:
-        fig_col = fig_col+1
-    
-    # columns_name = ['RF size', 'DSI', 'OSI', 'HI', 'LSI', 'Pref. size', 'SSI']
-    fig, axs = plt.subplots(fig_row, fig_col, sharex=False, figsize=figsize)
-    fig.tight_layout(pad=pad)
-    
-    # calculate the relative frequency for histograms
-         
-    data_box_all = []  
-    for i in range(fig_col-1):
-        if i == 0 and columns_label[i]=='rf_size':
-            data_box_temp_raw = np.log10(df_results[columns_label[i]])
-            # data_box_temp_raw = df_results[columns_label[i]]
-            data_box_temp = data_box_temp_raw[~np.isnan(data_box_temp_raw)]
-        else:
-            data_box_temp = df_results[columns_label[i]]
-        data_box_all.append(data_box_temp)
-    # for each cluster
-    data_box_clusters = []
-    for i in range(fig_row):
-        data_box_list_temp = []
-        for j in range(fig_col-1):
-            if j == 0 and columns_label[j]=='rf_size':
-                data_box_temp_raw = np.log10(df_results.loc[df_results['genetic_label_num']==i][columns_label[j]])
-                # data_box_temp_raw = df_results.loc[df_results[cluster_label]==i][columns_label[j]]
-                data_box_temp = data_box_temp_raw[~np.isnan(data_box_temp_raw)]
-            else:
-                data_box_temp = df_results.loc[df_results['genetic_label_num']==i][columns_label[j]]             
-            data_box_list_temp.append(data_box_temp)
-        data_box_clusters.append(data_box_list_temp)
-       
-        
-        # add the relationship to artificial-stimuli cluster if fac is false
-    if not fac:
-        freq_fac = []
-        cluster_num_fac = np.unique(df_results['cluster_label_dendro_num']).size
-        bins_fac = np.linspace(1,cluster_num_fac+1,cluster_num_fac+1)
-        for i in range(fig_row):
-            data_fac_i = df_results['cluster_label_dendro_num'][df_results['genetic_label_num']==i]
-            hist_fac_i, edges_fac_i = np.histogram(cluster_num_fac-data_fac_i, bins_fac)
-            freq_fac.append(hist_fac_i/float(hist_fac_i.sum())*100)
-        data_fac_all = df_results['cluster_label_dendro_num']
-        hist_fac_all, edges_fac_all = np.histogram(cluster_num_fac-data_fac_all, bins_fac)
-        freq_fac_all = hist_fac_all/float(hist_fac_all.sum())*100
-        
-        ylim_fac_all = np.max(freq_fac_all)    
-        
-        ylim_fac_list = []
-        for i in range(fig_row):
-            # max_temp = np.max([ylim_fac_all,np.max(freq_fac[i])])
-            max_temp = np.max([ylim_fac_all,np.max(freq_fac)]) # set the ylim the same for all rows
-            # max_temp = np.max(freq_fac[i])
-            ylim_fac_list.append([0, round_up(max_temp*1.1,0)])     
-           
-    for i in range(fig_row):
-        for j in range(fig_col):
-            if not fac:
-                if j < fig_col-1:
-                    bp = axs[i,j].boxplot(data_box_all[j], positions=range(0,1), notch=False, vert=False, whis=(0, 100))
-                    set_box_color(bp,'grey')
-                    # plot histogram for neurons in a specific cluster
-                    bp = axs[i,j].boxplot(data_box_clusters[i][j], positions=range(1,2), notch=False, vert=False, whis=(0, 100))
-                    set_box_color(bp,'green')
-                    axs[i,j].set_ylim([-0.5,1.5])
-                else:
-                    w = bins_fac[1] - bins_fac[0]
-                    axs[i,j].bar(bins_fac[:-1], freq_fac_all, width=w, align="edge", edgecolor="none", color='gray', alpha=1)
-                    axs[i,j].bar(bins_fac[:-1], freq_fac[i], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                    axs[i,j].set_ylim(ylim_fac_list[i])
-                    axs[i,j].set_xticks([0,10,20])
-            else:
-                bp = plt.boxplot(data_box_all[j], positions=range(0,1), notch=False, vert=False, whis=(0, 100))
-                set_box_color(bp,'grey')
-                # plot histogram for neurons in a specific cluster
-                # ax.bar(bins_list[k][:-1], freq_clusters[i][k], width=w, align="edge", edgecolor="none", color='green', alpha=1)
-                # ax.set_ylim(ylim_list[k])
-                bp = plt.boxplot(data_box_clusters[i][j], positions=range(1,2), notch=False, vert=False, whis=(0, 100))
-                set_box_color(bp,'green')
-                axs.set_ylim([-0.5,1.5])
-                    
-                
-            # Hide the right and top spines
-            axs[i,j].spines['right'].set_visible(False)
-            axs[i,j].spines['top'].set_visible(False)
-                    # Only show ticks on the left and bottom spines
-            axs[i,j].yaxis.set_ticks_position('left')
-            axs[i,j].xaxis.set_ticks_position('bottom')
-            # set 2^x as x label for the best size 
-            if i == fig_row-1 and j == 5:
-                formatter = FuncFormatter(lambda x_val, tick_pos: "$2^{{{:.0f}}}$".format((x_val)))
-                axs[i,j].xaxis.set_major_formatter(formatter)
-            if i == fig_row-1 and j == 0:
-                formatter = FuncFormatter(lambda x_val, tick_pos: "$10^{{{:.0f}}}$".format((x_val)))
-                axs[i,j].xaxis.set_major_formatter(formatter)
-            if i+1 < fig_row:
-                axs[i,j].axis("off")
-            if j == 0:
-                axs[i,j].set_title(genetic_name[i])
-            # if i == 0:
-            #     axs[i,j].set_title(columns_name[j])
-            if i == fig_row-1:
-                if fac:
-                    axs[i,j].set_xlabel(columns_name[j])   
-                else:
-                    if j < fig_col-1:
-                       axs[i,j].set_xlabel(columns_name[j])
-                    else:
-                       axs[i,j].set_xlabel('FAC')
-                       axs[i,j].set_yticks([])
-            if j==0 and i == fig_row-1:
-                axs[i,j].set_ylabel('Relative frequency')
-            
-            # sns.distplot(df_results.iloc[:,j],ax=axs[i,j], 
-            #              bins = bins_list[j], norm_hist=True, kde=False,hist_kws={"color":"blue"})
-            # sns.distplot(df_results.loc[df_results['genetic_label_num']==i].iloc[:,j],ax=axs[i,j], 
-            #              bins = bins_list[j], norm_hist=True, kde=False,hist_kws={"color":"red"})
-    if len(file_save)>0:
-        plt.savefig(file_save+'.png',bbox_inches='tight')
-        plt.savefig(file_save+'.svg',bbox_inches='tight')
-        plt.savefig(file_save+'.pdf',bbox_inches='tight')
-    return freq_fac_all, np.asarray(freq_fac)
 
 #%% plot violin and histograms for all genetically labeled clusters
 def figure_violin_genetic(df_results, genetic_name, df_col, columns_label,  columns_name, bins_list,
@@ -2836,120 +1600,6 @@ def figure_example_temporal_bar_polor_rf(temporal_list, temporal_zooms,
         
     return -1
 
-#%%
-def density_recovery_profile(c,bin_size,w,h):
-    '''plot density recovery profiles for c; c is a n x 2 numpy array'''
-    # remove nan from the array
-    c = c[~np.isnan(c).any(axis=1),:]
-    if w==0 and h==0:
-        w = c[:,0].max() - c[:,0].min()
-        h = c[:,1].max() - c[:,1].min()
-    # print(c.shape)
-    n,_ = c.shape
-    # calculate N*dr: average number of cells at radii between r and r+dr
-    # calculate distance between all pairs
-    dist = np.zeros((n,n))
-    for i in range(n):
-        for j in range(i,n):
-            dist[i,j] = distance.euclidean(c[i,:], c[j,:])
-            dist[j,i] = dist[i,j]
-    for i in range(n):  
-        dist[i,i] = np.nan
-    # histograms the distance
-    dist_max = np.nanmax(dist)
-    #if using analytic approach, dist_max should be the maximal distance within the region of interest
-    dist_max = np.sqrt(w**2+h**2)*1.05
-    # print(bin_size)
-    bins = np.arange(0, dist_max, bin_size)
-    bin_num = bins.size-1
-    hist = np.ones((n,bin_num))*np.nan
-    for i in range(n):
-        hist[i,:],_ = np.histogram(dist[i,:],bins=bins)
-    hist_mean = np.nanmean(hist,axis=0)
-    nn = hist_mean/bin_size # this is N in zhang 2012  
-    # plt.plot(bins[1:],nn,'.')
-    
-    # #compute the average area available at radii between r and r+dr from a reference cell
-    # # analytical approach for square as in zhang 2012
-    # # r_max = bins.max()
-    # a = c.max() - c.min() # edge length of the square
-    # aa = np.ones(bin_num)*np.nan
-    # _idx = bisect.bisect_left(bins, a)
-    # # when r<=a
-    # r = (bins[:_idx]+bins[1:_idx+1])/2
-    # z = r/a
-    # aa[:_idx] = 2*r*(np.pi-4*z+z**2)
-    # # when r>=a
-    # r = (bins[_idx:-1]+bins[_idx+1:])/2
-    # z = r/a
-    # aa[_idx:] = 2*r*(4*np.arcsin(1/z)-np.pi-2+4*np.sqrt(z**2-1)-z**2)
-    
-    # analytical approach for rectangle, w>h, w is along x axis, h is long y axis 
-    # w = c[:,0].max() - c[:,0].min()
-    # h = c[:,1].max() - c[:,1].min()
-    # rotate rectangle if w<h
-    cc = np.zeros_like(c)
-    if w>=h:
-        cc = c
-    else:
-        cc[:,0] = c[:,1]
-        cc[:,1] = c[:,0]
-        w,h = h,w
-    aa = np.ones(bin_num)*np.nan
-    _idx_h = bisect.bisect_left(bins, h)
-    r = (bins[:_idx_h]+bins[1:_idx_h+1])/2
-    aa[:_idx_h] = 2*r*(np.pi-2*r*((1/h)+(1/w))+((r**2)/(h*w)))
-    _idx_w = bisect.bisect_left(bins, w)
-    # if _idx_w<bins.shape[0]:
-    r = (bins[_idx_h:_idx_w]+bins[_idx_h+1:_idx_w+1])/2
-    aa[_idx_h:_idx_w] = 2*r*(2*np.arcsin(h/r) - 2*r/h + 2*np.sqrt((r/h)**2-1)-h/w)
-    r = (bins[_idx_w:-1]+bins[_idx_w+1:])/2
-    aa[_idx_w:] = 2*r*(2*np.arcsin(h/r) + 2*np.arcsin(w/r) - np.pi - h/w - w/h 
-                       + 2*np.sqrt((r/h)**2-1) + 2*np.sqrt((r/w)**2-1) - ((r**2)/(h*w)))
-    
-    
-    
-    
-    density = nn/aa
-    plt.bar(bins[1:],density,bin_size,edgecolor='black')
-    plt.show()
-    # plt.plot(bins[1:],nn)
-    # plt.plot(bins[1:],aa*253)
-    # plt.show()
-    
-    
-    # # dist_min = dist[dist!=0].min()        
-    # # dist_max = dist.max()
-    # # bins = np.linspace(dist_min, dist_max, num=bin_num)
-
-    # # density_all = np.zeros((n,bin_num))
-    # # for i in range(n):
-    # #     for j in range(bin_num):
-    # #         density_all[i,j] = np.sum(dist[i,:]<=bins[j])/(np.pi*bins[j]**2)
-    # # density = np.mean(density_all,axis=0)
-    # # an alternative way is set the refence as the neuron in the center of the image
-    # c_mean = np.nanmean(c,axis=0)
-    # dist_min_temp = 1e99
-    # idx_center = 0
-    # for i in range(n):
-    #     if not np.isnan(c[i,:]).any():
-    #         dist_temp = distance.euclidean(c[i,:], c_mean)
-    #         if dist_temp<dist_min_temp:
-    #             dist_min_temp = dist_temp
-    #             idx_center = i
-    # dist = np.ones(n)*np.nan
-    # for i in range(n):
-    #     if not np.isnan(c[i,:]).any():
-    #         dist[i] = distance.euclidean(c[i,:], c[idx_center,:])
-    # # dist_min = dist[dist!=0].min()        
-    # # dist_max = dist.max()
-    # # bins = np.linspace(dist_min, dist_max, num=bin_num)
-    # bin_num = len(bins)
-    # density = np.zeros(bin_num)
-    # for i in range(bin_num):
-    #     density[i] = np.sum(dist<=bins[i])/(np.pi*bins[i]**2)
-    return density, bins, nn, aa
-
 # Histogram pairwise distances
 def Histo_Dist(pts,dr):
     '''
@@ -3049,8 +1699,6 @@ def Analyze_Dist_Poly(pts,dr,p):
     return r,D,E # radius, density, uncertainty
 
 
-
-
 def jaccard(y_true, y_pred):
     """Calculate Jaccard coefficient
 
@@ -3078,54 +1726,6 @@ def jaccard(y_true, y_pred):
     # return float(np.sum(y_true & y_pred)) / (np.sum(y_true) + np.sum(y_pred) - np.sum(y_true & y_pred))
     return float(np.sum(np.logical_and(y_true,y_pred))) / float(np.sum(np.logical_or(y_true,y_pred)))
 
-#%%
-def seriation(Z,N,cur_index):
-    '''
-        input:
-            - Z is a hierarchical tree (dendrogram)
-            - N is the number of points given to the clustering process
-            - cur_index is the position in the tree for the recursive traversal
-        output:
-            - order implied by the hierarchical tree Z
-            
-        seriation computes the order implied by a hierarchical tree (dendrogram)
-    '''
-    if cur_index < N:
-        return [cur_index]
-    else:
-        left = int(Z[cur_index-N,0])
-        right = int(Z[cur_index-N,1])
-        return (seriation(Z,N,left) + seriation(Z,N,right))
-    
-def compute_serial_matrix(dist_mat,method="ward"):
-    '''
-        input:
-            - dist_mat is a distance matrix
-            - method = ["ward","single","average","complete"]
-        output:
-            - seriated_dist is the input dist_mat,
-              but with re-ordered rows and columns
-              according to the seriation, i.e. the
-              order implied by the hierarchical tree
-            - res_order is the order implied by
-              the hierarhical tree
-            - res_linkage is the hierarhical tree (dendrogram)
-        
-        compute_serial_matrix transforms a distance matrix into 
-        a sorted distance matrix according to the order implied 
-        by the hierarchical tree (dendrogram)
-    '''
-    N = len(dist_mat)
-    flat_dist_mat = squareform(dist_mat)
-    # res_linkage = linkage(flat_dist_mat, method=method,preserve_input=True) # this is for fastcluster
-    res_linkage = linkage(flat_dist_mat, method=method)
-    res_order = seriation(res_linkage, N, N + N-2)
-    seriated_dist = np.zeros((N,N))
-    a,b = np.triu_indices(N,k=1)
-    seriated_dist[a,b] = dist_mat[ [res_order[i] for i in a], [res_order[j] for j in b]]
-    seriated_dist[b,a] = seriated_dist[a,b]
-    
-    return seriated_dist, res_order, res_linkage
 # %% sort X according to cluster
 def sort_to_cluster(X_data,labels_gmm):
     '''
@@ -3190,7 +1790,8 @@ def cal_co_mat_gmm(X,labels,plot_bool=False):
     n_co_mat = labels.shape[1]
     co_mat_sum = np.zeros((num_neuron,num_neuron))
     for i in range(n_co_mat):
-        print(i)
+        if np.mod(i,10) == 0:
+            print(str(i/n_co_mat*100)+'%')
         co_mat = np.ones((num_neuron,num_neuron))
         for j in range(num_neuron):
             for k in range(j+1,num_neuron):
@@ -3380,8 +1981,6 @@ def cal_jaccard_sub(labels_gmm_dendro,labels_gmm_sub,idx_sub,num_sub=20):
     jaccard_sub_match = np.max(jaccard_sub,axis=2)    
     return jaccard_sub_match
 
-
-# %%
 #%% calculate the significance of functional properties between one cluster and the others
 # calculate the mean difference between one cluster and the others
 # todo: in the plot, log rf first then bar plot. another way is bar plot in log axis.
