@@ -7,4 +7,4 @@ This repository is for our article:
 This repo contains the data and code needed to reproduce the figures in the paper.
 * `/data/`: store data
 * `/code/cell_types_main.py`: the main code for generatting figures. Figures can be saved to `/figures/` by setting save_fig = True.
-* `/code/cell_types_.py`: functions that are used in `/code/cell_types_main.py`
+* `/code/cell_types_utils.py`: functions that are used in `/code/cell_types_main.py`
