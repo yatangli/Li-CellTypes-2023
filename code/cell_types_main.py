@@ -12,32 +12,11 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import seaborn as sns
 import scipy
-from scipy.spatial import distance
-from scipy.io import loadmat 
-import math
 from scipy.spatial import ConvexHull
 import hdf5storage
 import pandas as pd
-from sklearn.mixture import GaussianMixture
-from sklearn import cluster
-from sklearn.cluster import KMeans
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.cluster import SpectralClustering
-from matplotlib.ticker import FormatStrFormatter
-from sklearn.decomposition import SparsePCA
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-import sklearn
-from matplotlib.ticker import FuncFormatter
-import matplotlib
-from matplotlib.font_manager import findfont, FontProperties
-from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.manifold import TSNE
 import timeit
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)

@@ -8,28 +8,18 @@ Created on Thu Mar  9 11:40:35 2023
 
 import numpy as np
 import math
-
 from matplotlib import pyplot as plt
 from matplotlib import colors
 from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.cluster import SpectralClustering
-from sklearn import cluster
-
 import seaborn as sns
 import scipy
 from scipy.spatial import distance
 import hdf5storage
-import pandas as pd
-import timeit
 from sklearn.mixture import GaussianMixture
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.ticker import FuncFormatter
 import sklearn
 from sklearn.decomposition import SparsePCA
-import bisect
-from scipy.spatial.distance import pdist, squareform
-from sklearn import datasets
 # from fastcluster import linkage
 
 #%% define global variables      
