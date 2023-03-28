@@ -20,7 +20,7 @@ from matplotlib.ticker import FormatStrFormatter
 from matplotlib.ticker import FuncFormatter
 import sklearn
 from sklearn.decomposition import SparsePCA
-# from fastcluster import linkage
+from sklearn.linear_model import LinearRegression
 
 #%% define global variables      
 fig_width = 8
@@ -2438,7 +2438,18 @@ def rgc_sc_compare(rgc_dict,df_results,chirp_temporal_norm,color_temporal_norm,r
 
 
 
-
+def hist_2d_linear_regress(x,y,bins=10,cmap='Greys',identity_line=False):
+    fig,ax = plt.subplots(1,1,figsize=(8,8))
+    ax.hist2d(x,y,bins=bins,cmap=cmap)
+    regressor = LinearRegression() 
+    x_2d = np.expand_dims(x,axis=1)
+    y_2d = np.expand_dims(y,axis=1)
+    regressor.fit(x_2d, y_2d)
+    y_pred = regressor.predict(x_2d)
+    ax.plot(x,y_pred,'r')
+    if identity_line:
+        ax.plot([bins.min(),bins.max()],[bins.min(),bins.max()],'b--')
+    
 
 
 

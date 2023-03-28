@@ -1195,36 +1195,32 @@ if save_fig:
 plt.show()
 
 #Figure 13E, related to Figure 6
-fig,ax = plt.subplots(1,1,figsize=(8,8))
-ax.plot(rgc_dict['dsi'],rgc_dict['osi'],'.')
+bins=np.linspace(0,0.9,19)
+hist_2d_linear_regress(rgc_dict['dsi'].ravel(),rgc_dict['osi'].ravel(),bins=bins)
 if save_fig:
     plt.savefig(folder_figure+'figure_13E.png',bbox_inches='tight')   
 plt.show()
 
 #Figure 13F, related to Figure 6
-fig,ax = plt.subplots(1,1,figsize=(8,8))
-ax.plot(df_results['gdsi_svd'],df_results['gosi_svd'],'.')
+hist_2d_linear_regress(df_results['gdsi_svd'].ravel(),df_results['gosi_svd'].ravel(),bins=bins)
 if save_fig:
     plt.savefig(folder_figure+'figure_13F.png',bbox_inches='tight')    
 plt.show()
 
 #Figure 13G, related to Figure 6
-fig,ax = plt.subplots(1,1,figsize=(8,8))
-ax.plot(df_results['gdsi'],df_results['gosi'],'.')
+hist_2d_linear_regress(df_results['gdsi'].ravel(),df_results['gosi'].ravel(),bins=bins)
 if save_fig:
     plt.savefig(folder_figure+'figure_13G.png',bbox_inches='tight')  
 plt.show()
 
 #Figure 13H, related to Figure 6    
-fig,ax = plt.subplots(1,1,figsize=(8,8))
-ax.plot(df_results['gdsi'],df_results['gdsi_svd'],'.')
+hist_2d_linear_regress(df_results['gdsi'].ravel(),df_results['gdsi_svd'].ravel(),bins=bins,identity_line=True)
 if save_fig:
     plt.savefig(folder_figure+'figure_13H.png',bbox_inches='tight')  
 plt.show()
 
 #Figure 13I, related to Figure 6    
-fig,ax = plt.subplots(1,1,figsize=(8,8))
-ax.plot(df_results['gosi'],df_results['gosi_svd'],'.')
+hist_2d_linear_regress(df_results['gosi'].ravel(),df_results['gosi_svd'].ravel(),bins=bins,identity_line=True)
 if save_fig:
     plt.savefig(folder_figure+'figure_13I.png',bbox_inches='tight')  
 plt.show()
