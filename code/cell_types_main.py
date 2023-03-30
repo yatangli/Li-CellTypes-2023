@@ -1117,7 +1117,6 @@ plt.show()
 fig_zoom = 2.5
 hwr = 0.618 #height to width ratio
 plt.figure(figsize=(fig_width*fig_zoom,fig_width*fig_zoom*hwr))
-df_rf = df_results[['rf_azimuth', 'rf_elevation', 'rf_size', 'cluster_label_dendro_num']].copy()
 fig_params_rf_scatter = dict.copy(fig_params)
 fig_params_rf_scatter['space'] = 0.02
 fig_params_rf_scatter['zoom'] = 2.5
