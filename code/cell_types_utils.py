@@ -13,6 +13,7 @@ from matplotlib import colors
 from scipy.cluster.hierarchy import dendrogram, linkage
 import seaborn as sns
 import scipy
+import cv2
 from scipy.spatial import distance
 import hdf5storage
 from sklearn.mixture import GaussianMixture
@@ -2452,7 +2453,52 @@ def hist_2d_linear_regress(x,y,bins=10,cmap='Greys',identity_line=False):
     
 
 
+#%%
+def ellipse_fit(img_input,ax,thr=255/3,resize=30,max_val=255,gray=True,thickness=3):
+    if gray:
+        img_zoom = image_resize(norm_image(img_input),resize=resize)
+        img_gray_zoom = img_zoom.astype(np.uint8)
+        img_color_zoom = cv2.applyColorMap(img_gray_zoom,cv2.COLORMAP_VIRIDIS)
+        img = norm_image(cv2.resize(img_input,(np.array(img_input.shape)*resize).astype(int),interpolation = cv2.INTER_CUBIC))
+        img_gray = img.astype(np.uint8)
+        # img_color = cv2.applyColorMap(img_gray,cv2.COLORMAP_VIRIDIS)       
+    else:
+        img = cv2.resize(img_input,(np.array(img_input.shape[:-1])*resize).astype(int),interpolation = cv2.INTER_CUBIC)
+        img_color_zoom = img.copy()
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+    ret,img_bin = cv2.threshold(img_gray,thr,max_val,cv2.THRESH_BINARY)
+    
+    contours,hierarchy = cv2.findContours(img_bin, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    cnt_size = 0
+    cnt_idx = 0
+    for i,c in enumerate(contours):
+        if c.shape[0]>cnt_size:
+            cnt = c
+            cnt_size = c.shape[0]
+            cnt_idx = i
+    
+    ellipse = cv2.fitEllipse(cnt)
+    # img_contour = cv2.drawContours(img_color, contours, cnt_idx, (0,255,0), 3)
+    img_fit = cv2.ellipse(img_color_zoom,ellipse, (0,0,255), thickness)
+       
+    ax.imshow(cv2.cvtColor(img_fit,cv2.COLOR_BGR2RGB),aspect='equal',origin='upper')
+    ax.axes.xaxis.set_visible(False)
+    ax.axes.yaxis.set_visible(False)
+    return img_fit
+#%%
+def image_resize(img,resize=30):
+    [row,col] = img.shape
+    img_resize = np.zeros((row*resize,col*resize),dtype='uint32')
+    for i in range(row):
+        for j in range(col):
+            img_resize[i*resize:(i+1)*resize,j*resize:(j+1)*resize] = np.tile(img[i,j],(resize,resize))
+    return img_resize
+
+def norm_image(img_input,max_val=255):
+    img_input = img_input-img_input.min()
+    img_output = img_input/img_input.max()*max_val
+    return img_output
 
 
 

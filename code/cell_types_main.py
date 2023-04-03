@@ -13,11 +13,13 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
+import matplotlib
 from scipy.spatial import ConvexHull
 import hdf5storage
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import timeit
+import cv2
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
@@ -172,10 +174,12 @@ pc_k_X_cluster_gmm_dendro_reverse = pc_k_X_cluster_gmm_dendro[::-1,:]
 
 # Figure 2C  
 fig,ax = plt.subplots(1,1,figsize=(10,8))   
-ax.plot(-pc_k_X_cluster_gmm_dendro_reverse[:10,0],pc_k_X_cluster_gmm_dendro_reverse[:10,1],'*',color='blue')
-ax.plot(-pc_k_X_cluster_gmm_dendro_reverse[10:,0],pc_k_X_cluster_gmm_dendro_reverse[10:,1],'*',color='red')
+if pc_k_X_cluster_gmm_dendro_reverse[:10,0].sum()<0:
+    pc_k_X_cluster_gmm_dendro_reverse[:,0] = - pc_k_X_cluster_gmm_dendro_reverse[:,0]
+ax.plot(pc_k_X_cluster_gmm_dendro_reverse[:10,0],pc_k_X_cluster_gmm_dendro_reverse[:10,1],'*',color='black')
+ax.plot(pc_k_X_cluster_gmm_dendro_reverse[10:,0],pc_k_X_cluster_gmm_dendro_reverse[10:,1],'*',color='red')
 for i in range(num_type):
-    ax.text(-pc_k_X_cluster_gmm_dendro_reverse[i,0],pc_k_X_cluster_gmm_dendro_reverse[i,1],str(i+1))
+    ax.text(pc_k_X_cluster_gmm_dendro_reverse[i,0],pc_k_X_cluster_gmm_dendro_reverse[i,1],str(i+1))
 ax.set_aspect('auto')
 if save_fig:
     plt.savefig(folder_figure+'figure_2C.png',bbox_inches='tight')
@@ -419,6 +423,7 @@ mice_type_mat_rev = mice_type_mat[::-1,:]
 
 #Figure 7G, related to Figure 2
 fig,ax = plt.subplots(1,1,figsize=(10,8))
+# cmap = matplotlib.colormaps.get_cmap("viridis").copy() #this is for newer versions
 cmap = plt.cm.get_cmap("viridis").copy()
 cmap.set_bad(color='white',alpha=1)
 mice_type_mat_rev_masked = np.ma.masked_where(mice_type_mat_rev==0,mice_type_mat_rev)
@@ -465,6 +470,7 @@ si_cluster_reverse_sig_norm[p_cluster_reverse>=p_thr_fun] = np.nan
 
 # Figure 3B
 fig,ax = plt.subplots(1,1,figsize=(12,8))
+# cmap = matplotlib.colormaps.get_cmap("bwr").copy() #this is for newer versions
 cmap = plt.cm.get_cmap("bwr").copy()
 cmap.set_bad(color='grey',alpha=1)
 norm = colors.TwoSlopeNorm(vcenter=0)
@@ -610,27 +616,38 @@ _,_,_  = figure_violin_genetic(df_results, genetic_name[1:], 'genetic_label', co
                                                               fac=True, figsize=(20,8), pad=1.0,box_flag=box_flag)
 
 #%% Figure 5C: This is RF for all Ntsr1+ neurons, including RFs in the paper
-rf_ntsr1 = rf['rf_amp_all'][df_results['genetic_label']=='Ntsr1+']
+rf_ntsr1_all = rf['rf_amp_all'][df_results['genetic_label']=='Ntsr1+']
+plot_all_rf = False
+if plot_all_rf:
+    rf_ntsr1 = rf_ntsr1_all.copy() #[[],:]
+else:
+    rf_ntsr1 = rf_ntsr1_all[[48,51,204,234,235,286,5,18,19,42,50,67],:]
 num_neuron_ntsr1 = rf_ntsr1.shape[0]
 num_stim_rf = rf_ntsr1.shape[1]
 rf_stim = (11,11)
-num_fig_rf_row = int(np.ceil(np.sqrt(num_neuron_ntsr1)))
-num_fig_rf_col = int(np.ceil(num_neuron_ntsr1/18))
-fig,ax = plt.subplots(num_fig_rf_row,num_fig_rf_col,figsize=(num_fig_rf_col,num_fig_rf_row))
+# num_fig_rf_row = int(np.ceil(np.sqrt(num_neuron_ntsr1)))
+# num_fig_rf_col = int(np.ceil(num_neuron_ntsr1/18))
+# 
+num_fig_rf_col = 6
+num_fig_rf_row = int(np.ceil(num_neuron_ntsr1/num_fig_rf_col))
+zoom = 3
+fig,ax = plt.subplots(num_fig_rf_row,num_fig_rf_col,figsize=(num_fig_rf_col*zoom,num_fig_rf_row*zoom))
 for i in range(num_fig_rf_row*num_fig_rf_col):
     row = int(np.floor(i/num_fig_rf_col))
     col = int(np.mod(i,num_fig_rf_col))
     if i<num_neuron_ntsr1:
-        rf_min = rf_ntsr1[i,:].min()
-        rf_max = rf_ntsr1[i,:].max()
-        ax[row][col].imshow(np.reshape(rf_ntsr1[i,:np.prod(rf_stim)],rf_stim), vmin=rf_min, vmax=rf_max,cmap='Reds',alpha=0.8)
-        ax[row][col].imshow(np.reshape(rf_ntsr1[i,np.prod(rf_stim):],rf_stim), vmin=rf_min, vmax=rf_max,cmap='Greens',alpha=0.8)
+        # plot off subfield
+        rf_2d_off = np.reshape(rf_ntsr1[i,np.prod(rf_stim):],rf_stim)
+        rf_min = rf_2d_off.min()
+        rf_max = rf_2d_off.max()
+        img_fit = ellipse_fit(rf_2d_off,ax=ax[row][col]) 
+        # ax[row][col].text(0,0,str(i))
     ax[row][col].set_xticks([]) 
-    ax[row][col].set_yticks([])    
+    ax[row][col].set_yticks([])
 if save_fig:
     plt.savefig(folder_figure+'figure_5C.png',bbox_inches='tight')   
 plt.show()
-    
+
 #%% Figure 5D
 fig,ax = plt.subplots(1,1,figsize=(16,8))
 freq_fac_clusters_genetic_plot = np.zeros((4,num_type))
@@ -838,6 +855,7 @@ density_cell_type_nearby_mean_reverse_arr, density_cell_type_nearby_sum_reverse_
 
 # Figure 4E
 fig,ax = plt.subplots(1,1,figsize=(8,8))
+# cmap = matplotlib.colormaps.get_cmap("bwr").copy() #this is for newer versions
 cmap = plt.cm.get_cmap("bwr").copy()
 cmap.set_bad('grey',1.)
 m = np.ma.masked_where(np.isnan(density_cell_type_nearby_mean_reverse_arr[0,:,:]),density_cell_type_nearby_mean_reverse_arr[0,:,:])
@@ -937,19 +955,9 @@ if save_fig:
     plt.savefig(folder_figure+'figure_4C.png',bbox_inches='tight')
 plt.show()
 #%% Scatter plot for images with types color-coded
-''' 
-Example 1:
-    image_example_density = 18, vglut2
-Example 2:
-    image_example_density = 30, vgat 2
-Example 3:
-    image_example_density = 12, tac 1
-    
-'''
-
 # Figure 4A
 color_scatter = ['red','magenta','blue','green']
-image_example_density = 18
+image_example_density = 18 #vglut2
 cluster_label_5_example_density_plot = np.array([7,24,21,14])
 soma_position_example_density,soma_position_5_example_density,_= scatter_types(image_example_density,df_results,neuron,cluster_label_5_example_density_plot)
 fig,ax = plt.subplots(1,1,figsize=(8,8))
@@ -963,7 +971,7 @@ plt.show()
 
 # Figure 11A, related to Figure 4
 color_scatter = ['red','magenta','green','blue']
-image_example_density = 30
+image_example_density = 30 #vgat2
 soma_position_example_density,soma_position_5_example_density,cluster_label_5_example_density_plot= scatter_types(image_example_density,df_results,neuron)
 fig,ax = plt.subplots(1,2,figsize=(16,8))
 ax[0].plot(soma_position_example_density[:,0],soma_position_example_density[:,1],'^',color='grey')
@@ -972,7 +980,7 @@ for i in range(len(color_scatter)):
 ax[0].set_aspect('equal') 
 
 color_scatter = ['red','magenta','green','blue','cyan']
-image_example_density = 12
+image_example_density = 12 #tac1
 soma_position_example_density,soma_position_5_example_density,cluster_label_5_example_density_plot= scatter_types(image_example_density,df_results,neuron)
 ax[1].plot(soma_position_example_density[:,0],soma_position_example_density[:,1],'^',color='grey')
 for i in range(len(color_scatter)):
