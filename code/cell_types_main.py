@@ -423,8 +423,10 @@ mice_type_mat_rev = mice_type_mat[::-1,:]
 
 #Figure 7G, related to Figure 2
 fig,ax = plt.subplots(1,1,figsize=(10,8))
-# cmap = matplotlib.colormaps.get_cmap("viridis").copy() #this is for newer versions
-cmap = plt.cm.get_cmap("viridis").copy()
+if compareVersion(matplotlib.__version__,'3.7') == 1:
+    cmap = matplotlib.colormaps.get_cmap('viridis').copy() #this is for newer versions
+else:
+    cmap = plt.cm.get_cmap('viridis').copy()
 cmap.set_bad(color='white',alpha=1)
 mice_type_mat_rev_masked = np.ma.masked_where(mice_type_mat_rev==0,mice_type_mat_rev)
 ax.imshow(mice_type_mat_rev_masked.T,cmap=cmap,interpolation='nearest',aspect='auto',origin='lower',vmax=1,vmin=0)   
@@ -470,8 +472,10 @@ si_cluster_reverse_sig_norm[p_cluster_reverse>=p_thr_fun] = np.nan
 
 # Figure 3B
 fig,ax = plt.subplots(1,1,figsize=(12,8))
-# cmap = matplotlib.colormaps.get_cmap("bwr").copy() #this is for newer versions
-cmap = plt.cm.get_cmap("bwr").copy()
+if compareVersion(matplotlib.__version__,'3.7') == 1:
+    cmap = matplotlib.colormaps.get_cmap("bwr").copy() #this is for newer versions
+else:
+    cmap = plt.cm.get_cmap("bwr").copy()
 cmap.set_bad(color='grey',alpha=1)
 norm = colors.TwoSlopeNorm(vcenter=0)
 si_cluster_reverse_sig_norm_masked = np.ma.masked_where(np.isnan(si_cluster_reverse_sig_norm),si_cluster_reverse_sig_norm)
@@ -855,8 +859,10 @@ density_cell_type_nearby_mean_reverse_arr, density_cell_type_nearby_sum_reverse_
 
 # Figure 4E
 fig,ax = plt.subplots(1,1,figsize=(8,8))
-# cmap = matplotlib.colormaps.get_cmap("bwr").copy() #this is for newer versions
-cmap = plt.cm.get_cmap("bwr").copy()
+if compareVersion(matplotlib.__version__,'3.7') == 1:
+    cmap = matplotlib.colormaps.get_cmap("bwr").copy() #this is for newer versions
+else:
+    cmap = plt.cm.get_cmap("bwr").copy()
 cmap.set_bad('grey',1.)
 m = np.ma.masked_where(np.isnan(density_cell_type_nearby_mean_reverse_arr[0,:,:]),density_cell_type_nearby_mean_reverse_arr[0,:,:])
 norm = colors.TwoSlopeNorm(vcenter=1)
